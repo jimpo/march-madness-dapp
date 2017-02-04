@@ -1,5 +1,7 @@
 pragma solidity ^0.4.2;
 
+import "ByteBracket.sol";
+
 contract MarchMadness {
     struct Submission {
         bytes32 commitment;
@@ -94,7 +96,8 @@ contract MarchMadness {
         }
 
         submission.bracket = bracket;
-        submission.score = getBracketScore(bracket);
+        // TODO: Look into pass by reference of bracket argument
+        submission.score = ByteBracket.getBracketScore(bracket);
 
         if (submission.score > winningScore) {
             winningScore = submission.score;
@@ -129,10 +132,5 @@ contract MarchMadness {
         }
 
         return true;
-    }
-
-    // TODO: Look into pass by reference of parameter
-    function getBracketScore(bytes8 bracket) constant returns (uint8) {
-        return 1;
     }
 }
