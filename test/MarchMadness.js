@@ -15,10 +15,10 @@ contract('MarchMadness', (accounts) => {
     describe("constructor", () => {
         it("sets initial state", () => {
             const calls = [
-                marchMadness.creator.call(),
-                marchMadness.entryFee.call(),
-                marchMadness.tournamentStartTime.call(),
-                marchMadness.scoringDuration.call()
+                marchMadness.creator(),
+                marchMadness.entryFee(),
+                marchMadness.tournamentStartTime(),
+                marchMadness.scoringDuration()
             ];
             return Promise.all(calls)
                 .then((results) => {
@@ -81,7 +81,7 @@ contract('MarchMadness', (accounts) => {
         describe("before the tournament has started", () => {
             it("does nothing", () => {
                 return marchMadness.submitResults(results)
-                    .then(() => marchMadness.results.call())
+                    .then(() => marchMadness.results())
                     .then((contractResults) => {
                         assert.equal(contractResults, '0x0000000000000000');
                     });
@@ -101,8 +101,8 @@ contract('MarchMadness', (accounts) => {
                 return marchMadness.submitResults(results)
                     .then((txHash) => {
                         const calls = [
-                            marchMadness.results.call(),
-                            marchMadness.contestOverTime.call(),
+                            marchMadness.results(),
+                            marchMadness.contestOverTime(),
                             web3.eth.getTransactionReceipt(txHash)
                         ];
                         return Promise.all(calls)
@@ -119,7 +119,7 @@ contract('MarchMadness', (accounts) => {
 
             it("rejects submissions that are not from the contract creator", () => {
                 return marchMadness.submitResults(results, { from: accounts[1] })
-                    .then(() => marchMadness.results.call())
+                    .then(() => marchMadness.results())
                     .then((contractResults) => {
                         assert.equal(contractResults, '0x0000000000000000');
                     });
@@ -128,7 +128,7 @@ contract('MarchMadness', (accounts) => {
             it("does not allow multiple submissions", () => {
                 return marchMadness.submitResults(results)
                     .then(() => marchMadness.submitResults('0x8000000000000001'))
-                    .then(() => marchMadness.results.call())
+                    .then(() => marchMadness.results())
                     .then((contractResults) => {
                         assert.equal(contractResults, results);
                     });

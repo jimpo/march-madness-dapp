@@ -10,7 +10,7 @@ library ByteBracket {
 
         while (teamsRemaining > 1) {
             uint8 numGames = teamsRemaining / 2;
-            uint64 roundMask = (1 << numGames) - 1;
+            uint64 roundMask = (uint64(1) << numGames) - 1;
 
             uint64 scores = overlap & blacklist & roundMask;
             blacklist = pairwiseOr(scores & filter);
@@ -24,7 +24,7 @@ library ByteBracket {
         }
     }
 
-    function computeScoringMask(bytes8 results) constant returns (uint64 mask) {
+    function getScoringMask(bytes8 results) constant returns (uint64 mask) {
         // Filter for the second most significant bit since MSB is ignored.
         bytes8 bitSelector = 1 << 62;
         for (uint i = 0; i < 31; i++) {
@@ -43,7 +43,6 @@ library ByteBracket {
     // Separates the even and odd bits by repeatedly
     // shuffling smaller segments of a bitstring.
     function pairwiseOr(uint64 bits) internal returns (uint64) {
-
         uint64 tmp;
         tmp = (bits ^ (bits >> 1)) & 0x22222222;
         bits ^= (tmp ^ (tmp << 1));

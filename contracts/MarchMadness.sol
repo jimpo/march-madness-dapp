@@ -76,7 +76,7 @@ contract MarchMadness {
         }
 
         results = results_;
-        scoringMask = ByteBracket.computeScoringMask(results);
+        scoringMask = ByteBracket.getScoringMask(results);
         contestOverTime = now + scoringDuration;
         TournamentOver();
         return true;
