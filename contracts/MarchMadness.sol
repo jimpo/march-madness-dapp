@@ -21,6 +21,8 @@ contract MarchMadness {
     // Number of submissions with a winning score
     uint private numWinners;
 
+    uint64 private scoringMask;
+
     address public creator;
     uint public entryFee;
     uint public scoringDuration;
@@ -74,6 +76,7 @@ contract MarchMadness {
         }
 
         results = results_;
+        scoringMask = ByteBracket.computeScoringMask(results);
         contestOverTime = now + scoringDuration;
         TournamentOver();
         return true;
@@ -97,7 +100,7 @@ contract MarchMadness {
 
         submission.bracket = bracket;
         // TODO: Look into pass by reference of bracket argument
-        submission.score = ByteBracket.getBracketScore(bracket);
+        submission.score = ByteBracket.getBracketScore(bracket, results, scoringMask);
 
         if (submission.score > winningScore) {
             winningScore = submission.score;

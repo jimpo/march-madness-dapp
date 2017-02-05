@@ -76,7 +76,7 @@ contract('MarchMadness', (accounts) => {
     });
 
     describe("#submitResults", () => {
-        const results = "0x0000000000000001";
+        const results = "0x8000000000000000";
 
         describe("before the tournament has started", () => {
             it("does nothing", () => {
@@ -127,13 +127,16 @@ contract('MarchMadness', (accounts) => {
 
             it("does not allow multiple submissions", () => {
                 return marchMadness.submitResults(results)
-                    .then(() => marchMadness.submitResults('0x0000000000000002'))
+                    .then(() => marchMadness.submitResults('0x8000000000000001'))
                     .then(() => marchMadness.results.call())
                     .then((contractResults) => {
                         assert.equal(contractResults, results);
                     });
             });
         });
+    });
+
+    describe("#scoreBracket", () => {
     });
 
     function dateToTimestamp(date) {
