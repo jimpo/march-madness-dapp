@@ -1,0 +1,202 @@
+@import "~bootstrap/less/mixins/clearfix";
+
+@team_ht: 22px;
+@team_spc: 2px;
+@game_ht: 2 * @team_ht + @team_spc;
+@game_spc: 14px;
+@round_wd: 31%;
+
+.bracket {
+  margin-bottom: 20px;
+  // .bracket-inner
+  //   position: relative
+
+  // .new_tournament_bracket, .edit_tournament_bracket
+  //   display: block
+
+  // .bracket-lines
+  //   position: absolute
+
+  // .bracket-score
+  //   font-size: 2.1em
+  //   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif
+  //   padding: 10px
+  //   border: 2px solid $chron-text
+
+  .region {
+    .clearfix();
+    float: left;
+    width: 50%;
+    position: relative;
+  }
+
+  .region-name {
+    //font-family: "Helvetica Neue", Helvetica, Arial, sans-serif
+    position: absolute;
+    margin: 0;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .round {
+    width: @round_wd;
+    float: left;
+  }
+
+  .region-0, .region-1 {
+    .round-0 {
+      margin-right: 4%;
+    }
+    .round-1 {
+      margin-right: -14%;
+    }
+    .round-2 {
+      margin-right: -17%;
+    }
+    .round-3 {
+      margin-right: 3%;
+    }
+  }
+
+  .region-2, .region-3 {
+    .round-0 {
+      margin-left: 4%;
+    }
+    .round-1 {
+      margin-left: -14%;
+    }
+    .round-2 {
+      margin-left: -17%;
+    }
+    .round-3 {
+      margin-left: 3%;
+    }
+  }
+
+  .game {
+    position: relative;
+    z-index: 1;
+  }
+
+  .round-0 {
+    .game {
+      margin-bottom: @game_spc;
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+  .round-1 {
+    margin-top: (@game_ht + @game_spc) / 2;
+    .game {
+      margin-bottom: @game_ht + 2 * @game_spc;
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+  .round-2 {
+    margin-top: 3 * (@game_ht + @game_spc) / 2;
+    .game {
+      margin-bottom: 3 * @game_ht + 4 * @game_spc;
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+  .round-3 {
+    margin-top: 7 * (@game_ht + @game_spc) / 2;
+    .game {
+      margin-bottom: 7 * @game_ht + 8 * @game_spc;
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  .game {
+    //font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background-color: white;
+
+    .team {
+      height: @team_ht;
+      margin-bottom: @team_spc;
+      background-color: #DDDDDD;
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    .seed {
+      height: 100%;
+      float: left;
+      width: 15%;
+      text-align: center;
+      margin-right: 3%;
+      color: white;
+      background-color: #006699;
+    }
+
+    .game-info {
+      height: 100%;
+      padding: 0 3%;
+    }
+    .winner, .selected {
+      font-weight: bold;
+    }
+    .correct {
+      background-color: darkseagreen;
+    }
+    .incorrect {
+      background-color: indianred;
+      text-decoration: line-through;
+    }
+    .score {
+      float: right;
+    }
+  }
+
+  .team-selectable {
+    cursor: pointer;
+    &:hover {
+      background-color: darkgray;
+    }
+  }
+
+  .final-rounds {
+    .clearfix();
+    width: 60%;
+    margin: 20px auto;
+
+    .game-60 {
+      width: 30%;
+      float: left;
+    }
+    .game-61 {
+      width: 30%;
+      float: right;
+    }
+    .game-62 {
+      width: 30%;
+      margin: auto;
+    }
+
+    .game-60, .game-61 {
+      padding: 1%;
+      margin-top: 1px;
+      border: 3px solid black;
+    }
+
+    .game-62 {
+      padding: 1%;
+      border: 5px solid MidnightBlue;
+    }
+  }
+  // .actions
+  //   position: absolute
+  //   top: 30px
+  //   left: 50%
+  //   @include translateX(-50%)
+  //   z-index: 1
+}
