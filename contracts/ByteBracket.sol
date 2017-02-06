@@ -1,25 +1,30 @@
 pragma solidity ^0.4.2;
 
-// Reference: https://gist.github.com/pursuingpareto/b15f1197d96b1a2bbc48
+// This library can be used to score byte brackets. Byte brackets are a succinct encoding of a
+// 64 team bracket into an 8-byte array. The tournament results are encoded in the same format and
+// compared against the bracket picks. To reduce the computation time of scoring a bracket, a 64-bit
+// value called the "scoring mask" is first computed once for a particular result set and used to
+// score all brackets.
+//
+// Algorithm description: https://drive.google.com/file/d/0BxHbbgrucCx2N1MxcnA1ZE1WQW8/view
+// Reference implementation: https://gist.github.com/pursuingpareto/b15f1197d96b1a2bbc48
 library ByteBracket {
-    function getBracketScore(bytes8 bracket, bytes8 results, uint64 filter) constant returns (uint8 points) {
+    function getBracketScore(bytes8 bracket, bytes8 results, uint64 filter)
+        constant
+        returns (uint8 points)
+    {
         uint8 roundNum = 0;
-        uint8 teamsRemaining = 64;
-        uint64 blacklist = uint64(-1);
+        uint8 numGames = 32;
+        uint64 blacklist = (uint64(1) << numGames) - 1;
         uint64 overlap = uint64(~(bracket ^ results));
 
-        while (teamsRemaining > 1) {
-            uint8 numGames = teamsRemaining / 2;
-            uint64 roundMask = (uint64(1) << numGames) - 1;
-
-            uint64 scores = overlap & blacklist & roundMask;
+        while (numGames > 0) {
+            uint64 scores = overlap & blacklist;
+            points += popcount(scores) << roundNum;
             blacklist = pairwiseOr(scores & filter);
-
             overlap >>= numGames;
             filter >>= numGames;
-
-            points += popcount(scores) << roundNum;
-            teamsRemaining /= 2;
+            numGames /= 2;
             roundNum++;
         }
     }
