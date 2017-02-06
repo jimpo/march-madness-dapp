@@ -36,3 +36,31 @@ export function previousGames(gameNumber) {
   const firstGame = firstGameInRound(round - 1) + 2 * (gameNumber - firstGameInRound(round));
   return [firstGame, firstGame + 1];
 }
+
+export function nextGame(gameNumber) {
+  const round = roundOfGame(gameNumber);
+  if (round === 5) {
+    throw new Error("Last round game has no next game");
+  }
+  return firstGameInRound(round + 1) + Math.floor((gameNumber - firstGameInRound(round)) / 2);
+}
+
+export function bufferToBitstring(buffer) {
+  let bitstring = '';
+  buffer.forEach((byte) => {
+    const byteString = byte.toString(2);
+    for (let i = byteString.length; i < 8; i++) {
+      bitstring += '0';
+    }
+    bitstring += byteString;
+  });
+  return bitstring;
+}
+
+export function bitstringToBuffer(bitstring) {
+  const bytes = [];
+  for (let i = 0; i < bitstring.length; i += 8) {
+    bytes.push(parseInt(bitstring.substr(i, 8), 2));
+  }
+  return Buffer.from(bytes);
+}

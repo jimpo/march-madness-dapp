@@ -1,4 +1,5 @@
 import classNames from 'classnames';
+import {observer} from 'mobx-react';
 import React from 'react';
 import _ from 'underscore';
 
@@ -6,9 +7,17 @@ import * as util from '../../util';
 import _css from './style.less';
 
 
-function Team({team}) {
+function Team({team, gameNumber, bracket}) {
+  let clickHandler = null;
+  if (bracket.editable) {
+    clickHandler = () => {
+      if (team) {
+        bracket.makePick(gameNumber, team.number);
+      }
+    };
+  }
   return (
-    <div className="team team-selectable">
+    <div className={classNames('team', { 'team-selectable': bracket.editable })} onClick={clickHandler}>
       <div className="seed">{team && team.seed}</div>
       <div className="game-info">
         <span className="team-name">{team && team.name}</span>
@@ -17,14 +26,14 @@ function Team({team}) {
   );
 }
 
-function Game({number, bracket}) {
+const Game = observer(function Game({number, bracket}) {
   return (
     <div className={classNames('game', `game-${number}`)}>
-      <Team team={bracket.team1InGame(number)}/>
-      <Team team={bracket.team2InGame(number)}/>
+      <Team team={bracket.team1InGame(number)} gameNumber={number} bracket={bracket}/>
+      <Team team={bracket.team2InGame(number)} gameNumber={number} bracket={bracket}/>
     </div>
   );
-}
+});
 
 function Round({number, regionNumber, bracket}) {
   const gameNumbers = util.regionalGamesInRound(regionNumber, number);

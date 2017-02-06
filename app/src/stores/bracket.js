@@ -1,13 +1,17 @@
-import {observable} from 'mobx';
+import {action, observable} from 'mobx';
 
 import * as util from '../util';
 
 
+const SALT_SIZE = 32;
+
+
 export default class Bracket {
-  //@observable picks = [];
+  @observable picks = new Array(64);
 
   constructor(tournament) {
     this.tournament = tournament;
+    this.editable = true;
   }
 
   team1InGame(gameNumber) {
@@ -16,9 +20,8 @@ export default class Bracket {
       return this.tournament.getTeam(2 * gameNumber);
     }
     else {
-      return null;
       const previousGames = util.previousGames(gameNumber);
-      return this.picks[previousGames[0]];
+      return this.tournament.getTeam(this.picks[previousGames[0]]);
     }
   }
 
@@ -28,35 +31,46 @@ export default class Bracket {
       return this.tournament.getTeam(2 * gameNumber + 1);
     }
     else {
-      return null;
       const previousGames = util.previousGames(gameNumber);
-      return this.picks[previousGames[1]];
+      return this.tournament.getTeam(this.picks[previousGames[1]]);
+    }
+  }
+
+  @action
+  makePick(gameNumber, teamNumber) {
+    const oldPick = this.picks[gameNumber];
+    this.picks[gameNumber] = teamNumber;
+
+    if (oldPick !== teamNumber && oldPick !== undefined) {
+      while (gameNumber < 62) {
+        gameNumber = util.nextGame(gameNumber);
+        if (this.picks[gameNumber] !== oldPick) {
+          break;
+        }
+        this.picks[gameNumber] = undefined;
+      }
     }
   }
 
   toByteBracket() {
     // MSB is ignored, but setting it to 1 ensures that the value is non-zero.
-    let byteBracket = 1;
+    let byteBracketStr = '1';
     for (let i = 62; i >= 0; i--) {
-      byteBracket <<= 1;
-      if (picks[i] == this.team1InGame(i)) {
-        byteBracket |= 1;
-      }
+      byteBracketStr += this.picks[i] == this.team1InGame(i).number ? '1' : '0';
     }
-    return byteBracket;
+    return util.bitstringToBuffer(byteBracketStr);
   }
 
-  static fromByteBracket(byteBracket) {
-    const bracket = new Bracket();
+  @action
+  loadByteBracket(byteBracket) {
+    let byteBracketStr = util.bufferToBitstring(byteBracket);
     for (let i = 0; i < 63; i++) {
-      if (byteBracket & 1) {
-        bracket.picks.push(bracket.team1InGame(i));
+      if (byteBracketStr[63 - i] === '1') {
+        this.picks[i] = this.team1InGame(i).number;
       }
       else {
-        bracket.picks.push(bracket.team2InGame(i));
+        this.picks[i] = this.team2InGame(i).number;
       }
-      byteBracket >>= 1;
     }
-    return bracket;
   }
 }

@@ -14,10 +14,11 @@ export default class Tournament {
     };
   }
 
-  getTeam(index) {
+  getTeam(number) {
     return {
-      seed: SEEDS[index % 16],
-      ...this.teams[index]
+      number: number,
+      seed: SEEDS[number % 16],
+      ...this.teams[number]
     };
   }
 }
