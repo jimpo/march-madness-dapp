@@ -1,6 +1,6 @@
-pragma solidity ^0.4.2;
+pragma solidity ^0.4.4;
 
-import "ByteBracket.sol";
+import "./ByteBracket.sol";
 
 contract MarchMadness {
     struct Submission {
@@ -30,6 +30,7 @@ contract MarchMadness {
     uint public contestOverTime;
     bytes8 public results;
     uint8 public winningScore;
+    string public tournamentDataIPFSHash;
 
     // Setup
     // Submissions
@@ -40,12 +41,14 @@ contract MarchMadness {
 	function MarchMadness(
         uint entryFee_,
         uint tournamentStartTime_,
-        uint scoringDuration_
+        uint scoringDuration_,
+        string tournamentDataIPFSHash_
     ) {
         creator = msg.sender;
 		entryFee = entryFee_;
         tournamentStartTime = tournamentStartTime_;
         scoringDuration = scoringDuration_;
+        tournamentDataIPFSHash = tournamentDataIPFSHash_;
 	}
 
     function submitBracket(bytes32 commitment) payable {

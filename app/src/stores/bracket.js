@@ -3,7 +3,7 @@ import {action, observable} from 'mobx';
 import * as util from '../util';
 
 
-const SALT_SIZE = 32;
+const SALT_SIZE = 16;
 
 
 export default class Bracket {
