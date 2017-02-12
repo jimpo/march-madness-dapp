@@ -2,41 +2,43 @@ import _css from 'bootstrap/less/bootstrap.less';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Web3 from 'web3';
+import {action} from 'mobx';
 
-import BracketView from './components/bracket';
+import Application from './components/Application';
 import Bracket from './stores/bracket';
+import ApplicationStore from './stores/application-store';
+import ContractStore from './stores/contract-store';
 import Tournament from './stores/tournament';
-import tournamentConfig from './tournamentConfig';
 
-
-function createWeb3() {
-  if (typeof web3 !== 'undefined') {
-    return new Web3(web3.currentProvider);
-  }
-  else {
-    return new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-  }
-}
-
-function Application({bracket}) {
-  return (
-    <div className="container">
-      <h1>Ethereum Bracket Challenge</h1>
-      <BracketView bracket={bracket}/>
-    </div>
-  );
-};
 
 window.addEventListener('load', () => {
-  window.web3 = createWeb3();
-  console.log(web3.isConnected());
-
-  const tournament = new Tournament(tournamentConfig);
+  const applicationStore = new ApplicationStore();
+  const contractStore = new ContractStore(applicationStore.web3);
+  const tournament = new Tournament();
   const bracket = new Bracket(tournament);
 
   ReactDOM.render(
-    <Application bracket={bracket}/>,
+    <Application
+      application={applicationStore}
+      contract={contractStore}
+      bracket={bracket}
+    />,
     document.getElementById('main')
   );
+
+  applicationStore.checkEthereumConnection()
+    .then(() => {
+      if (applicationStore.ethereumNodeConnected) {
+        return applicationStore.checkIpfsConnection();
+      }
+    })
+    .then(() => {
+      if (applicationStore.ipfsNodeConnected) {
+        return contractStore.getTournamentData();
+      }
+    })
+    .then(action(({teams, regions}) => {
+      tournament.teams = teams;
+      tournament.regions = regions;
+    }));
 });
