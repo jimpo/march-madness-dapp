@@ -1,17 +1,24 @@
 import {action, observable} from 'mobx';
+import {randomBytes} from 'crypto';
 
 import * as util from '../util';
-
+import tournament from './tournament';
 
 const SALT_SIZE = 16;
 
 
-export default class Bracket {
+class Bracket {
+  @observable address;
   @observable picks = new Array(64);
+  @observable salt;
 
-  constructor(tournament) {
+  constructor() {
     this.tournament = tournament;
     this.editable = true;
+  }
+
+  generateSalt() {
+    this.salt = randomBytes(SALT_SIZE);
   }
 
   team1InGame(gameNumber) {
@@ -74,3 +81,5 @@ export default class Bracket {
     }
   }
 }
+
+export default new Bracket();

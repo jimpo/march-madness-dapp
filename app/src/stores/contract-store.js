@@ -1,36 +1,37 @@
-import {action, observable} from 'mobx';
+import {action, observable, computed} from 'mobx';
 import _ from 'underscore';
 
 import * as ipfs from '../ipfs';
+import web3 from '../web3';
 import {abi, networks} from "../../../build/contracts/MarchMadness";
 
 
-export default class ContractStore {
-  @observable error;
+class ContractStore {
   @observable address;
-  @observable tournamentData;
+  @observable tournamentStartTime;
+  @observable commitments = {};
 
-  constructor(web3) {
-    this.web3 = web3;
-    this.MarchMadness = this.web3.eth.contract(abi);
-    this.address =  _.values(networks)[0].address;
+  constructor() {
+    this.MarchMadness = web3.eth.contract(abi);
+
+    const networkKey = _.max(_.keys(networks));
+    this.address = networks[networkKey].address;
   }
 
-  getTournamentData() {
-    if (!this.address) {
-      return Promise.reject(new Error("Contract address is not set"));
-    }
+  @computed get marchMadness() {
+    return this.MarchMadness.at(this.address);
+  }
 
-    const marchMadness = this.MarchMadness.at(this.address);
+  fetchCommitment(account) {
     return new Promise((resolve, reject) => {
-      marchMadness.tournamentDataIPFSHash((err, ipfsHash) => {
-        if (err) return reject(err);
+      this.marchMadness.getCommitment(account, (error, commitment) => {
+        if (error) return reject(error);
 
-        ipfs.getPath(ipfsHash)
-          .then((content) => JSON.parse(content))
-          .then((json) => resolve(json))
-          .catch(reject);
+        this.commitments[account] = commitment;
+        resolve();
       });
     });
   }
 }
+
+export default new ContractStore();

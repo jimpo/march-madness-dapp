@@ -85,7 +85,7 @@ contract MarchMadness {
         return true;
     }
 
-    function scoreBracket(bytes8 bracket, bytes32 salt) returns (bool) {
+    function scoreBracket(bytes8 bracket, bytes16 salt) returns (bool) {
         if (results == 0) {
             return false;
         }
@@ -138,5 +138,9 @@ contract MarchMadness {
         }
 
         return true;
+    }
+
+    function getCommitment(address account) constant returns (bytes32) {
+        return submissions[account].commitment;
     }
 }

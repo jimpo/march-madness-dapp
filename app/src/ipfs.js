@@ -4,7 +4,9 @@ const GATEWAY_URL = "http://localhost:8080";
 const README_PATH = "QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/readme";
 
 export function isGatewayAvailable() {
-  return fetch(GATEWAY_URL + `/ipfs/${README_PATH}`)
+  // Append timestamp to IPFS path to bust browser cache
+  const timestamp = (new Date()).getTime();
+  return fetch(GATEWAY_URL + `/ipfs/${README_PATH}?timestamp=${timestamp}`)
     .then((response) => response.ok || false)
     .catch(() => false);
 }

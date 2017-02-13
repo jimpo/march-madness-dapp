@@ -1,44 +1,28 @@
-import _css from 'bootstrap/less/bootstrap.less';
+import _bootstrap from 'bootstrap/less/bootstrap.less';
+import _fa from 'font-awesome/less/font-awesome.less';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {action} from 'mobx';
 
 import Application from './components/Application';
-import Bracket from './stores/bracket';
-import ApplicationStore from './stores/application-store';
-import ContractStore from './stores/contract-store';
-import Tournament from './stores/tournament';
+import bracketStore from './stores/bracket';
+import applicationStore from './stores/application-store';
+import contractStore from './stores/contract-store';
+import tournamentStore from './stores/tournament';
+
+import {initializeTournament} from './actions/startup';
 
 
 window.addEventListener('load', () => {
-  const applicationStore = new ApplicationStore();
-  const contractStore = new ContractStore(applicationStore.web3);
-  const tournament = new Tournament();
-  const bracket = new Bracket(tournament);
-
   ReactDOM.render(
     <Application
       application={applicationStore}
       contract={contractStore}
-      bracket={bracket}
+      bracket={bracketStore}
+      tournament={tournamentStore}
     />,
     document.getElementById('main')
   );
 
-  applicationStore.checkEthereumConnection()
-    .then(() => {
-      if (applicationStore.ethereumNodeConnected) {
-        return applicationStore.checkIpfsConnection();
-      }
-    })
-    .then(() => {
-      if (applicationStore.ipfsNodeConnected) {
-        return contractStore.getTournamentData();
-      }
-    })
-    .then(action(({teams, regions}) => {
-      tournament.teams = teams;
-      tournament.regions = regions;
-    }));
+  initializeTournament();
 });
