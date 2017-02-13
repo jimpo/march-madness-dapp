@@ -69,10 +69,11 @@ function Region({details, bracket}) {
   );
 }
 
-export default function Bracket({bracket}) {
+export default function Bracket({bracket, children}) {
   const tournament = bracket.tournament;
   return (
     <div className="bracket">
+      {children}
       <div className="clearfix">
         <Region bracket={bracket} details={tournament.regionDetails(0)}/>
         <Region bracket={bracket} details={tournament.regionDetails(2)}/>

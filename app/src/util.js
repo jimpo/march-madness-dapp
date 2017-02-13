@@ -45,6 +45,10 @@ export function nextGame(gameNumber) {
   return firstGameInRound(round + 1) + Math.floor((gameNumber - firstGameInRound(round)) / 2);
 }
 
+export function dateToTimestamp(date) {
+  return Math.floor(date.getTime() / 1000);
+}
+
 export function bufferToBitstring(buffer) {
   let bitstring = '';
   buffer.forEach((byte) => {
@@ -63,4 +67,19 @@ export function bitstringToBuffer(bitstring) {
     bytes.push(parseInt(bitstring.substr(i, 8), 2));
   }
   return Buffer.from(bytes);
+}
+
+export function breakDownTimeInterval(seconds) {
+  const secondsInMinute = 60;
+  const secondsInHour = 60 * secondsInMinute;
+  const secondsInDay = 24 * secondsInHour;
+
+  const days = Math.floor(seconds / secondsInDay);
+  seconds = seconds % secondsInDay;
+  const hours = Math.floor(seconds / secondsInHour);
+  seconds = seconds % secondsInHour;
+  const minutes = Math.floor(seconds / secondsInMinute);
+  seconds = seconds % secondsInMinute;
+
+  return {days, hours, minutes, seconds};
 }

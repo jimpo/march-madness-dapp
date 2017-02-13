@@ -10,7 +10,7 @@ import applicationStore from './stores/application-store';
 import contractStore from './stores/contract-store';
 import tournamentStore from './stores/tournament';
 
-import {initializeTournament} from './actions/startup';
+import {initialize} from './actions/startup';
 
 
 window.addEventListener('load', () => {
@@ -24,5 +24,5 @@ window.addEventListener('load', () => {
     document.getElementById('main')
   );
 
-  initializeTournament();
+  initialize();
 });

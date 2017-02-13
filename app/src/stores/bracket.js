@@ -1,5 +1,6 @@
-import {action, observable} from 'mobx';
+import {action, observable, computed} from 'mobx';
 import {randomBytes} from 'crypto';
+import _ from 'underscore';
 
 import * as util from '../util';
 import tournament from './tournament';
@@ -9,7 +10,7 @@ const SALT_SIZE = 16;
 
 class Bracket {
   @observable address;
-  @observable picks = new Array(64);
+  @observable picks = new Array(63);
   @observable salt;
 
   constructor() {
@@ -41,6 +42,10 @@ class Bracket {
       const previousGames = util.previousGames(gameNumber);
       return this.tournament.getTeam(this.picks[previousGames[1]]);
     }
+  }
+
+  @computed get complete() {
+    return _.every(this.picks, _.isNumber);
   }
 
   @action
@@ -82,4 +87,9 @@ class Bracket {
   }
 }
 
-export default new Bracket();
+const bracketStore = new Bracket();
+export default bracketStore;
+
+window.randomFillBracket = function() {
+  bracketStore.loadByteBracket(randomBytes(8));
+}
