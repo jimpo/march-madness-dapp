@@ -1,3 +1,5 @@
+// @flow
+
 import _bootstrap from 'bootstrap/less/bootstrap.less';
 import _fa from 'font-awesome/less/font-awesome.less';
 
@@ -28,10 +30,9 @@ window.addEventListener('load', () => {
   initialize();
 });
 
-
 window.randomFillBracket = function() {
-  bracketStore.picks.loadByteBracket(randomBytes(8));
+  bracketStore.picks.loadByteBracket(randomBytes(8).toString('hex'));
 };
 window.randomFillResults = function() {
-  bracketStore.results.loadByteBracket(randomBytes(8));
+  bracketStore.results.loadByteBracket(randomBytes(8).toString('hex'));
 };

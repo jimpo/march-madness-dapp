@@ -1,3 +1,5 @@
+// @flow
+
 import {action, observable, computed} from 'mobx';
 import {randomBytes} from 'crypto';
 import _ from 'underscore';
@@ -10,7 +12,9 @@ const SALT_SIZE = 16;
 
 
 class BracketSelection {
-  @observable winners;
+  tournament: any;
+
+  @observable winners: Array<?number>;
 
   constructor() {
     this.tournament = tournament;
@@ -21,7 +25,7 @@ class BracketSelection {
     this.winners = new Array(63);
   }
 
-  team1InGame(gameNumber) {
+  team1InGame(gameNumber: number): {number: number} {
     const round = util.roundOfGame(gameNumber);
     if (round === 0) {
       return this.tournament.getTeam(2 * gameNumber);
@@ -32,7 +36,7 @@ class BracketSelection {
     }
   }
 
-  team2InGame(gameNumber) {
+  team2InGame(gameNumber: number): {number: number} {
     const round = util.roundOfGame(gameNumber);
     if (round === 0) {
       return this.tournament.getTeam(2 * gameNumber + 1);
@@ -43,12 +47,12 @@ class BracketSelection {
     }
   }
 
-  @computed get complete() {
+  @computed get complete(): boolean {
     return _.every(this.winners, _.isNumber);
   }
 
   @action
-  selectWinner(gameNumber, teamNumber) {
+  selectWinner(gameNumber: number, teamNumber: number): void {
     const oldWinner = this.winners[gameNumber];
     this.winners[gameNumber] = teamNumber;
 
@@ -63,7 +67,7 @@ class BracketSelection {
     }
   }
 
-  toByteBracket() {
+  toByteBracket(): string {
     // MSB is ignored, but setting it to 1 ensures that the value is non-zero.
     let byteBracketStr = '1';
     for (let i = 62; i >= 0; i--) {
@@ -73,7 +77,7 @@ class BracketSelection {
   }
 
   @action
-  loadByteBracket(byteBracket) {
+  loadByteBracket(byteBracket: string): void {
     let byteBracketStr = util.bufferToBitstring(new Buffer(byteBracket, 'hex'));
     for (let i = 0; i < 63; i++) {
       if (byteBracketStr[63 - i] === '1') {
@@ -87,11 +91,11 @@ class BracketSelection {
 }
 
 class Bracket {
-  @observable address;
+  @observable address: string;
   @observable picks = new BracketSelection();
   @observable results = new BracketSelection();
-  @observable salt;
-  @observable score;
+  @observable salt: string;
+  @observable score: number;
 
   @action
   reset() {
@@ -99,21 +103,24 @@ class Bracket {
     this.salt = randomBytes(SALT_SIZE).toString('hex');
   }
 
-  @computed get commitment() {
+  @computed get commitment(): ?string {
     if (this.picks.complete && this.salt) {
       return web3.sha3(this.address + this.picks.toByteBracket() + this.salt, { encoding: 'hex' });
     }
   }
 
-  @computed get submissionKey() {
-    return this.address.slice(2) +
-      this.picks.toByteBracket() +
-      this.salt +
-      this.commitment.slice(2);
+  @computed get submissionKey(): ?string {
+    const commitment = this.commitment;
+    if (commitment) {
+      return this.address.slice(2) +
+        this.picks.toByteBracket() +
+        this.salt +
+        commitment.slice(2);
+    }
   }
 
   @action
-  deserialize(key) {
+  deserialize(key: string): void {
     const addressLength = 40;
     const byteBracketLength = 16;
     const saltLength = SALT_SIZE * 2;

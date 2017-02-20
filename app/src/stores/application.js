@@ -1,14 +1,15 @@
+// @flow
+
 import {observable, computed} from 'mobx';
 import React from 'react';
 
 class ApplicationStore {
-  @observable error;
-  @observable ethereumNodeConnected;
-  @observable ipfsNodeConnected;
-  @observable screen = 'StartScreen';
-  @observable resultsBracket = false;
+  @observable error: Error;
+  @observable ethereumNodeConnected: boolean;
+  @observable ipfsNodeConnected: boolean;
+  @observable screen: string = 'StartScreen';
 
-  @computed get errorMessage() {
+  @computed get errorMessage(): ?string {
     if (this.error) {
       return this.error.message;
     }

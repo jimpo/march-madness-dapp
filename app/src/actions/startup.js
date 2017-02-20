@@ -9,11 +9,11 @@ import {bracketAddressChanged} from './common';
 
 const marchMadness = new MarchMadnessWrapper();
 
-export function createBracket() {
+export function createBracket(): void {
   applicationStore.screen = 'CreateBracketScreen';
 }
 
-export function loadBracket() {
+export function loadBracket(): void {
   applicationStore.error = null;
   if (bracketStore.picks.complete) {
     applicationStore.screen = 'BracketScreen';

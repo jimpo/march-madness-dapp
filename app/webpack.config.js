@@ -13,7 +13,11 @@ module.exports = {
         loader: 'babel-loader',
         query: {
           presets: ['es2015', 'react', 'stage-0'],
-          plugins: ['transform-decorators-legacy', 'transform-class-properties']
+          plugins: [
+            'transform-decorators-legacy',
+            'transform-class-properties',
+            'transform-flow-strip-types'
+          ]
         }
       },
       {

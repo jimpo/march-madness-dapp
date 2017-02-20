@@ -1,0 +1,10 @@
+[ignore]
+
+[include]
+
+[libs]
+
+[options]
+module.name_mapper='.*\.less' -> '<PROJECT_ROOT>/flow/less-stub.js'
+unsafe.enable_getters_and_setters=true
+esproposal.decorators=ignore
