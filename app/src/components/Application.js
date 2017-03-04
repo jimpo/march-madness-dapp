@@ -1,9 +1,10 @@
 import {observer} from 'mobx-react';
 import React from 'react';
 
-import CreateBracketScreen from './CreateBracketScreen';
+import BracketScreen from './BracketScreen';
 import StartScreen from './StartScreen';
 import SubmitBracketScreen from './SubmitBracketScreen';
+import LoadBracketScreen from './LoadBracketScreen';
 
 
 const ErrorDisplay = observer(function ErrorDisplay({application}) {
@@ -21,10 +22,12 @@ class Application extends React.Component {
     switch (this.props.application.screen) {
     case 'StartScreen':
       return <StartScreen {...this.props}/>;
-    case 'CreateBracketScreen':
-      return <CreateBracketScreen {...this.props}/>;
+    case 'BracketScreen':
+      return <BracketScreen {...this.props}/>;
     case 'SubmitBracketScreen':
       return <SubmitBracketScreen {...this.props}/>;
+    case 'LoadBracketScreen':
+      return <LoadBracketScreen {...this.props}/>;
     }
   }
 

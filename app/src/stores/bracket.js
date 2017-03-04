@@ -19,10 +19,6 @@ class Bracket {
     this.tournament = tournament;
   }
 
-  generateSalt() {
-    this.salt = randomBytes(SALT_SIZE).toString('hex');
-  }
-
   team1InGame(gameNumber) {
     const round = util.roundOfGame(gameNumber);
     if (round === 0) {
@@ -45,13 +41,23 @@ class Bracket {
     }
   }
 
+  @action
+  reset() {
+    this.picks = new Array(63);
+    this.salt = randomBytes(SALT_SIZE).toString('hex');
+  }
+
   @computed get complete() {
     return _.every(this.picks, _.isNumber);
   }
 
   @computed get commitment() {
     if (this.complete && this.salt) {
-      return web3.sha3(this.toByteBracket(), this.salt);
+      return web3.sha3(
+        this.address.replace(/^0x/, ''),
+        this.toByteBracket(),
+        this.salt
+      );
     }
   }
 
@@ -101,10 +107,34 @@ class Bracket {
   }
 
   @action
-  loadSubmissionKey() {
-    if (!web3.eth.accounts.includes(bracketStore.address)) {
-      throw Error(" ");
+  deserialize(key) {
+    const addressLength = 40;
+    const byteBracketLength = 16;
+    const saltLength = SALT_SIZE * 2;
+    const commitmentLength = 64;
+    const totalLength = addressLength + byteBracketLength + saltLength + commitmentLength;
+
+    if (key.length !== totalLength || !key.match(/^[0-9a-f]*$/)) {
+      throw new Error("Invalid submission key");
     }
+
+    let index = 0;
+    const address = key.slice(index, index += addressLength);
+    const byteBracket = key.slice(index, index += byteBracketLength);
+    const salt = key.slice(index, index += saltLength);
+    const checksum = key.slice(index, index += commitmentLength);
+
+    if (!web3.eth.accounts.includes("0x" + address)) {
+      throw Error("This submission appears to have been made by a different Ethereum client");
+    }
+
+    if (web3.sha3(address, byteBracket, salt) !== "0x" + checksum) {
+      throw new Error("Submission key failed checksum");
+    }
+
+    this.address = "0x" + address;
+    this.loadByteBracket(byteBracket);
+    this.salt = salt;
   }
 }
 

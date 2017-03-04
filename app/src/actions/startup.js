@@ -9,11 +9,37 @@ import web3 from '../web3';
 
 
 export function createBracket() {
-  applicationStore.screen = 'CreateBracketScreen';
+  applicationStore.screen = 'BracketScreen';
+}
+
+export function loadBracket() {
+  applicationStore.error = null;
+  if (bracketStore.complete) {
+    applicationStore.screen = 'BracketScreen';
+  }
+  else {
+    applicationStore.screen = 'LoadBracketScreen';
+  }
 }
 
 export function doneCreatingBracket() {
   applicationStore.screen = 'SubmitBracketScreen';
+}
+
+export function submissionKeyEntered(key) {
+  action(() => {
+    applicationStore.error = null;
+    try {
+      bracketStore.deserialize(key);
+    }
+    catch (e) {
+      applicationStore.error = e;
+      return;
+    }
+
+    localStorage.submissionKey = key;
+    applicationStore.screen = 'BracketScreen';
+  })();
 }
 
 export function submitBracket() {
@@ -34,8 +60,9 @@ function submitBracketCommitment() {
       web3.eth.getTransactionReceipt(txHash, (err, receipt) => {
         if (err) return reject(err);
 
+        localStorage.submissionKey = bracketStore.submissionKey;
         console.log(receipt.logs);
-        resolve();
+        return resolve();
       });
     };
     contractStore.marchMadness.submitBracket(bracketStore.commitment, options, callback);

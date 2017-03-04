@@ -1,7 +1,7 @@
 import {observer} from 'mobx-react';
 import React from 'react';
 
-import {createBracket} from '../actions/startup';
+import {createBracket, loadBracket} from '../actions/startup';
 
 
 const Requirements  = observer(function Requirements({application}) {
@@ -93,7 +93,8 @@ const Requirements  = observer(function Requirements({application}) {
       return (
         <button
           type="button"
-          className="btn btn-lg btn-default btn-block">
+          className="btn btn-lg btn-default btn-block"
+          onClick={loadBracket}>
           Load my bracket
         </button>
       );

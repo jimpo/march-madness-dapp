@@ -6,7 +6,7 @@ import {doneCreatingBracket} from '../actions/startup';
 import {breakDownTimeInterval} from '../util';
 
 
-const CreateBracketScreen = observer(function CreateBracketScreen({bracket, contract}) {
+const BracketScreen = observer(function BracketScreen({bracket, contract}) {
   const timeToStart = breakDownTimeInterval(contract.timeToTournamentStart);
   const scoringPeriod = breakDownTimeInterval(contract.scoringDuration);
 
@@ -48,4 +48,4 @@ const CreateBracketScreen = observer(function CreateBracketScreen({bracket, cont
   );
 });
 
-export default CreateBracketScreen;
+export default BracketScreen;

@@ -46,7 +46,7 @@ function initializeBracket() {
     }
 
     bracketStore.address = defaultAddress;
-    bracketStore.generateSalt();
+    bracketStore.reset();
   }
   return contractStore.fetchCommitment(bracketStore.address)
     .then((commitment) => {
@@ -54,6 +54,7 @@ function initializeBracket() {
         bracketStore.editable = true;
       }
       else if (commitment !== bracketStore.commitment) {
+        bracketStore.reset();
         throw new Error(
           "A bracket has already been entered for your Ethereum account. " +
             "Load the bracket using the submission key."
