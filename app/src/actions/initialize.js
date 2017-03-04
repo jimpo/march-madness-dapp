@@ -1,8 +1,8 @@
 import {action} from 'mobx';
 
 import * as ipfs from '../ipfs';
-import applicationStore from '../stores/application-store';
-import contractStore from '../stores/contract-store';
+import applicationStore from '../stores/application';
+import contractStore from '../stores/contract';
 import bracketStore from '../stores/bracket';
 import tournamentStore from '../stores/tournament';
 import {dateToTimestamp} from '../util';
@@ -37,9 +37,15 @@ function checkConnections() {
 
 function initializeBracket() {
   if (localStorage.submissionKey) {
-    bracketStore.deserialize(localStorage.submissionKey);
+    try {
+      bracketStore.deserialize(localStorage.submissionKey);
+    }
+    catch (e) {
+      delete localStorage.submissionKey;
+    }
   }
-  else {
+
+  if (!bracketStore.address) {
     const defaultAddress = web3.eth.defaultAccount || web3.eth.accounts[0];
     if (!defaultAddress) {
       throw Error("Cannot find default Ethereum account");
@@ -48,6 +54,7 @@ function initializeBracket() {
     bracketStore.address = defaultAddress;
     bracketStore.reset();
   }
+
   return contractStore.fetchCommitment(bracketStore.address)
     .then((commitment) => {
       if (!commitment) {

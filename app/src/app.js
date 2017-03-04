@@ -5,9 +5,9 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 
 import Application from './components/Application';
+import applicationStore from './stores/application';
 import bracketStore from './stores/bracket';
-import applicationStore from './stores/application-store';
-import contractStore from './stores/contract-store';
+import contractStore from './stores/contract';
 import tournamentStore from './stores/tournament';
 
 import {initialize} from './actions/initialize';

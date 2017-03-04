@@ -5,6 +5,7 @@ import _ from 'underscore';
 
 import * as util from '../../util';
 import _css from './style.less';
+import Lines from './Lines';
 
 
 function Team({team, gameNumber, bracket}) {
@@ -58,11 +59,16 @@ function Region({details, bracket}) {
       />
     );
   });
+
+  let linesFlipped = false;
   if (details.number > 1) {
     rounds.reverse();
+    linesFlipped = true;
   }
+
   return (
     <div className={classNames('region', `region-${details.number}`)}>
+      <Lines flipped={linesFlipped}/>
       <h3 className="region-name">{details.name}</h3>
       {rounds}
     </div>

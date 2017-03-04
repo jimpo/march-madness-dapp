@@ -10,6 +10,11 @@
   margin-bottom: 20px;
   position: relative;
 
+  .bracket-lines {
+    position: absolute;
+    left: 0;
+  }
+
   .actions {
     position: absolute;
     width: 100%;
@@ -23,21 +28,6 @@
     }
   }
 
-  // .bracket-inner
-  //   position: relative
-
-  // .new_tournament_bracket, .edit_tournament_bracket
-  //   display: block
-
-  // .bracket-lines
-  //   position: absolute
-
-  // .bracket-score
-  //   font-size: 2.1em
-  //   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif
-  //   padding: 10px
-  //   border: 2px solid $chron-text
-
   .region {
     .clearfix();
     float: left;
@@ -46,7 +36,6 @@
   }
 
   .region-name {
-    //font-family: "Helvetica Neue", Helvetica, Arial, sans-serif
     position: absolute;
     margin: 0;
     top: 50%;
@@ -131,7 +120,6 @@
   }
 
   .game {
-    //font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     background-color: white;
 
     .team {
@@ -208,10 +196,4 @@
       border: 5px solid MidnightBlue;
     }
   }
-  // .actions
-  //   position: absolute
-  //   top: 30px
-  //   left: 50%
-  //   @include translateX(-50%)
-  //   z-index: 1
 }
