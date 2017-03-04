@@ -4,6 +4,7 @@ import _ from 'underscore';
 
 import * as util from '../util';
 import tournament from './tournament';
+import web3 from '../web3';
 
 const SALT_SIZE = 16;
 
@@ -12,14 +13,14 @@ class Bracket {
   @observable address;
   @observable picks = new Array(63);
   @observable salt;
+  @observable editable = false;
 
   constructor() {
     this.tournament = tournament;
-    this.editable = true;
   }
 
   generateSalt() {
-    this.salt = randomBytes(SALT_SIZE);
+    this.salt = randomBytes(SALT_SIZE).toString('hex');
   }
 
   team1InGame(gameNumber) {
@@ -48,6 +49,19 @@ class Bracket {
     return _.every(this.picks, _.isNumber);
   }
 
+  @computed get commitment() {
+    if (this.complete && this.salt) {
+      return web3.sha3(this.toByteBracket(), this.salt);
+    }
+  }
+
+  @computed get submissionKey() {
+    return this.address.replace(/^0x/, '') +
+      this.toByteBracket() +
+      this.salt +
+      this.commitment.replace(/^0x/, '');
+  }
+
   @action
   makePick(gameNumber, teamNumber) {
     const oldPick = this.picks[gameNumber];
@@ -70,12 +84,12 @@ class Bracket {
     for (let i = 62; i >= 0; i--) {
       byteBracketStr += this.picks[i] == this.team1InGame(i).number ? '1' : '0';
     }
-    return util.bitstringToBuffer(byteBracketStr);
+    return util.bitstringToBuffer(byteBracketStr).toString('hex');
   }
 
   @action
   loadByteBracket(byteBracket) {
-    let byteBracketStr = util.bufferToBitstring(byteBracket);
+    let byteBracketStr = util.bufferToBitstring(new Buffer(byteBracket, 'hex'));
     for (let i = 0; i < 63; i++) {
       if (byteBracketStr[63 - i] === '1') {
         this.picks[i] = this.team1InGame(i).number;
@@ -83,6 +97,13 @@ class Bracket {
       else {
         this.picks[i] = this.team2InGame(i).number;
       }
+    }
+  }
+
+  @action
+  loadSubmissionKey() {
+    if (!web3.eth.accounts.includes(bracketStore.address)) {
+      throw Error(" ");
     }
   }
 }

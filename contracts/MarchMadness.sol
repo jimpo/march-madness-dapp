@@ -10,6 +10,7 @@ contract MarchMadness {
         bool collectedWinnings;
     }
 
+    event SubmissionAccepted(address account);
     event NewWinner(address winner, uint8 score);
     event TournamentOver();
 
@@ -65,6 +66,7 @@ contract MarchMadness {
         }
 
         submission.commitment = commitment;
+        SubmissionAccepted(msg.sender);
     }
 
     function submitResults(bytes8 results_) returns (bool) {

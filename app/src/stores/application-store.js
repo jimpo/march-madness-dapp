@@ -9,8 +9,7 @@ class ApplicationStore {
   @observable error;
   @observable ethereumNodeConnected;
   @observable ipfsNodeConnected;
-  @observable teams;
-  @observable regions;
+  @observable screen = 'StartScreen';
 
   checkEthereumConnection() {
     this.ethereumNodeConnected = web3.isConnected();
@@ -24,7 +23,7 @@ class ApplicationStore {
 
   @computed get errorMessage() {
     if (this.error) {
-      return error.message;
+      return this.error.message;
     }
   }
 }

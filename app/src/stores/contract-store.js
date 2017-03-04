@@ -6,8 +6,9 @@ import web3 from '../web3';
 import {abi, networks} from "../../../build/contracts/MarchMadness";
 
 
+const NO_COMMITMENT = "0x0000000000000000000000000000000000000000000000000000000000000000";
+
 class ContractStore {
-  @observable address;
   @observable entryFee;
   @observable scoringDuration;
   @observable tournamentDataIPFSHash;
@@ -16,24 +17,30 @@ class ContractStore {
   @observable commitments = {};
 
   constructor() {
-    this.MarchMadness = web3.eth.contract(abi);
-
     const networkKey = _.max(_.keys(networks));
     this.address = networks[networkKey].address;
-  }
 
-  @computed get marchMadness() {
-    return this.MarchMadness.at(this.address);
+    const MarchMadness = web3.eth.contract(abi);
+    this.marchMadness = MarchMadness.at(this.address);
   }
 
   fetchCommitment(account) {
     return new Promise((resolve, reject) => {
       this.marchMadness.getCommitment(account, (error, commitment) => {
         if (error) return reject(error);
+
+        if (commitment === NO_COMMITMENT) {
+          commitment = null;
+        }
+
         this.commitments[account] = commitment;
-        resolve();
+        return resolve(commitment);
       });
     });
+  }
+
+  @computed get tournamentStarted() {
+    return this.timeToTournamentStart === 0;
   }
 
   contractState(property) {
@@ -44,7 +51,7 @@ class ContractStore {
     return new Promise((resolve, reject) => {
       this.marchMadness[property]((error, value) => {
         if (error) return reject(error);
-        resolve(value);
+        return resolve(value);
       });
     });
   }

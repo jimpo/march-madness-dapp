@@ -5,75 +5,39 @@ import applicationStore from '../stores/application-store';
 import contractStore from '../stores/contract-store';
 import bracketStore from '../stores/bracket';
 import tournamentStore from '../stores/tournament';
-import {dateToTimestamp} from '../util';
 import web3 from '../web3';
 
 
 export function createBracket() {
-  bracketStore.address = web3.eth.defaultAccount;
-  bracketStore.generateSalt();
-  contractStore.fetchCommitment(bracketStore.address)
-    .then(() => {
-      console.log(contractStore.commitments[bracketStore.address]);
-    });
+  applicationStore.screen = 'CreateBracketScreen';
 }
 
-export function initialize() {
-  checkConnections()
-    .then((connected) => {
-      if (connected) {
-        initializeTournament();
-      }
-    })
-    .catch(console.error);
+export function doneCreatingBracket() {
+  applicationStore.screen = 'SubmitBracketScreen';
 }
 
-function checkConnections() {
-  return Promise.all([
-    applicationStore.checkEthereumConnection(),
-    applicationStore.checkIpfsConnection()
-  ])
-    .then(() => applicationStore.ethereumNodeConnected && applicationStore.ipfsNodeConnected);
+export function submitBracket() {
+  submitBracketCommitment()
+    .catch((err) => applicationStore.error = err);
+  //applicationStore.screen = 'SpinnerScreen';
 }
 
-function initializeTournament() {
-  return initializeContract()
-    .then(() => ipfs.getPath(contractStore.tournamentDataIPFSHash))
-    .then((content) => JSON.parse(content))
-    .then(action(({teams, regions}) => {
-      tournamentStore.teams = teams;
-      tournamentStore.regions = regions;
-    }));
-}
+function submitBracketCommitment() {
+  return new Promise((resolve, reject) => {
+    const options = {
+      from: bracketStore.address,
+      value: contractStore.entryFee
+    };
+    const callback = (err, txHash) => {
+      if (err) return reject(err);
 
-function startTournamentCountdown() {
-  let intervalId;
-  const updateTimeToTournamentStart = () => {
-    const now = dateToTimestamp(new Date());
-    if (now > contractStore.tournamentStartTime) {
-      contractStore.timeToTournamentStart = 0;
-      clearInterval(intervalId);
-    }
-    else {
-      contractStore.timeToTournamentStart = contractStore.tournamentStartTime - now;
-    }
-  };
-  intervalId = setInterval(updateTimeToTournamentStart, 5000);
-  updateTimeToTournamentStart();
-}
+      web3.eth.getTransactionReceipt(txHash, (err, receipt) => {
+        if (err) return reject(err);
 
-function initializeContract() {
-  return Promise.all([
-    contractStore.contractState('entryFee'),
-    contractStore.contractState('tournamentStartTime'),
-    contractStore.contractState('scoringDuration'),
-    contractStore.contractState('tournamentDataIPFSHash')
-  ])
-    .then(action((results) => {
-      contractStore.entryFee = results[0];
-      contractStore.tournamentStartTime = results[1];
-      contractStore.scoringDuration = results[2];
-      contractStore.tournamentDataIPFSHash = results[3];
-    }))
-    .then(startTournamentCountdown);
+        console.log(receipt.logs);
+        resolve();
+      });
+    };
+    contractStore.marchMadness.submitBracket(bracketStore.commitment, options, callback);
+  });
 }
