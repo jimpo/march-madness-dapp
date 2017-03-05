@@ -87,7 +87,7 @@ contract MarchMadness {
         return true;
     }
 
-    function scoreBracket(bytes8 bracket, bytes16 salt) returns (bool) {
+    function revealBracket(bytes8 bracket, bytes16 salt) returns (bool) {
         if (results == 0) {
             return false;
         }
@@ -99,13 +99,12 @@ contract MarchMadness {
         if (submission.score != 0) {
             return false;
         }
-        if (sha3(bracket, salt) != submission.commitment) {
+        if (sha3(msg.sender, bracket, salt) != submission.commitment) {
             return false;
         }
 
         submission.bracket = bracket;
-        // TODO: Look into pass by reference of bracket argument
-        submission.score = ByteBracket.getBracketScore(bracket, results, scoringMask);
+        submission.score = scoreBracket(bracket);
 
         if (submission.score > winningScore) {
             winningScore = submission.score;
@@ -140,6 +139,14 @@ contract MarchMadness {
         }
 
         return true;
+    }
+
+    function scoreBracket(bytes8 bracket) constant returns (uint8) {
+        return ByteBracket.getBracketScore(bracket, results, scoringMask);
+    }
+
+    function getScore(address account) constant returns (uint8) {
+        return submissions[account].score;
     }
 
     function getCommitment(address account) constant returns (bytes32) {
