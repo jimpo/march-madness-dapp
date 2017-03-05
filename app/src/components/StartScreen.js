@@ -1,7 +1,7 @@
 import {observer} from 'mobx-react';
 import React from 'react';
 
-import {createBracket, loadBracket} from '../actions/startup';
+import {createBracket, enterResults, loadBracket} from '../actions/startup';
 
 
 const Requirements  = observer(function Requirements({application}) {
@@ -51,7 +51,7 @@ const Requirements  = observer(function Requirements({application}) {
 
 @observer class StartScreen extends React.Component {
   renderDescription() {
-    return <p>Welcome to the Ethereum bracket challenge! This is an open bracket pool for the 2017 NCAA Men's basketball tournament running on the <a href="https://www.ethereum.org/" target="_blank">Ethereum</a> platform.</p>;
+    return <p>Welcome to the Ethereum bracket challenge! This is an open bracket pool for the NCAA basketball tournament running on the <a href="https://www.ethereum.org/" target="_blank">Ethereum</a> platform.</p>;
   }
 
   renderRules() {
@@ -74,8 +74,10 @@ const Requirements  = observer(function Requirements({application}) {
   }
 
   renderCreateBracketButton() {
-    const {bracket, tournament} = this.props;
-    if (tournament.ready && bracket.editable) {
+    const {bracket, tournament, contract} = this.props;
+    if (tournament.ready &&
+        !contract.tournamentStarted &&
+        contract.commitments.get(bracket.address) === contract.NO_COMMITMENT) {
       return (
         <button
           type="button"
@@ -101,6 +103,22 @@ const Requirements  = observer(function Requirements({application}) {
     }
   }
 
+  renderEnterResultsButton() {
+    const {bracket, contract} = this.props;
+    if (contract.creator === bracket.address &&
+        contract.tournamentStarted &&
+        !bracket.results.complete) {
+      return (
+        <button
+          type="button"
+          className="btn btn-lg btn-default btn-block"
+          onClick={enterResults}>
+          Enter tournament results
+        </button>
+      );
+    }
+  }
+
   render() {
     const {application, tournament, bracket} = this.props;
     return (
@@ -109,11 +127,12 @@ const Requirements  = observer(function Requirements({application}) {
         {this.renderRules()}
         {this.renderScoring()}
         <Requirements application={application}/>
-      <hr/>
-      {this.renderCreateBracketButton()}
-      {this.renderLoadBracketButton()}
-    </section>
-    );
+        <hr/>
+        {this.renderCreateBracketButton()}
+        {this.renderLoadBracketButton()}
+        {this.renderEnterResultsButton()}
+      </section>
+   );
   }
 }
 

@@ -10,6 +10,7 @@ class ApplicationStore {
   @observable ethereumNodeConnected;
   @observable ipfsNodeConnected;
   @observable screen = 'StartScreen';
+  @observable resultsBracket = false;
 
   checkEthereumConnection() {
     this.ethereumNodeConnected = web3.isConnected();

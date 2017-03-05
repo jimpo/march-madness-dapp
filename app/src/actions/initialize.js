@@ -57,10 +57,7 @@ function initializeBracket() {
 
   return contractStore.fetchCommitment(bracketStore.address)
     .then((commitment) => {
-      if (!commitment) {
-        bracketStore.editable = true;
-      }
-      else if (commitment !== bracketStore.commitment) {
+      if (commitment !== contractStore.NO_COMMITMENT && commitment !== bracketStore.commitment) {
         bracketStore.reset();
         throw new Error(
           "A bracket has already been entered for your Ethereum account. " +
@@ -73,9 +70,14 @@ function initializeBracket() {
 function initializeTournament() {
   return ipfs.getPath(contractStore.tournamentDataIPFSHash)
     .then((content) => JSON.parse(content))
-    .then(action(({teams, regions}) => {
+    .then(action(({name, teams, regions}) => {
+      tournamentStore.name = name;
       tournamentStore.teams = teams;
       tournamentStore.regions = regions;
+
+      if (contractStore.results !== "0x0000000000000000") {
+        bracketStore.results.loadByteBracket(contractStore.results.slice(2));
+      }
     }));
 }
 
@@ -97,16 +99,20 @@ function startTournamentCountdown() {
 
 function initializeContract() {
   return Promise.all([
+    contractStore.contractState('creator'),
     contractStore.contractState('entryFee'),
     contractStore.contractState('tournamentStartTime'),
     contractStore.contractState('scoringDuration'),
-    contractStore.contractState('tournamentDataIPFSHash')
+    contractStore.contractState('tournamentDataIPFSHash'),
+    contractStore.contractState('results')
   ])
-    .then(action((results) => {
-      contractStore.entryFee = results[0];
-      contractStore.tournamentStartTime = results[1];
-      contractStore.scoringDuration = results[2];
-      contractStore.tournamentDataIPFSHash = results[3];
+    .then(action((values) => {
+      contractStore.creator = values[0];
+      contractStore.entryFee = values[1];
+      contractStore.tournamentStartTime = values[2];
+      contractStore.scoringDuration = values[3];
+      contractStore.tournamentDataIPFSHash = values[4];
+      contractStore.results = values[5];
     }))
     .then(startTournamentCountdown);
 }

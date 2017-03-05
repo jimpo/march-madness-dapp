@@ -129,6 +129,23 @@
       &:last-child {
         margin-bottom: 0;
       }
+
+      &.selectable {
+        cursor: pointer;
+        &:hover {
+          background-color: darkgray;
+        }
+      }
+      &.selected {
+        font-weight: bold;
+      }
+      &.correct {
+        background-color: darkseagreen;
+      }
+      &.incorrect {
+        background-color: indianred;
+        text-decoration: line-through;
+      }
     }
 
     .seed {
@@ -157,13 +174,6 @@
     }
     .score {
       float: right;
-    }
-  }
-
-  .team-selectable {
-    cursor: pointer;
-    &:hover {
-      background-color: darkgray;
     }
   }
 

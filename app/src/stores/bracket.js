@@ -9,14 +9,16 @@ import web3 from '../web3';
 const SALT_SIZE = 16;
 
 
-class Bracket {
-  @observable address;
-  @observable picks = new Array(63);
-  @observable salt;
-  @observable editable = false;
+class BracketSelection {
+  @observable winners;
 
   constructor() {
     this.tournament = tournament;
+    this.reset();
+  }
+
+  reset() {
+    this.winners = new Array(63);
   }
 
   team1InGame(gameNumber) {
@@ -26,7 +28,7 @@ class Bracket {
     }
     else {
       const previousGames = util.previousGames(gameNumber);
-      return this.tournament.getTeam(this.picks[previousGames[0]]);
+      return this.tournament.getTeam(this.winners[previousGames[0]]);
     }
   }
 
@@ -37,49 +39,26 @@ class Bracket {
     }
     else {
       const previousGames = util.previousGames(gameNumber);
-      return this.tournament.getTeam(this.picks[previousGames[1]]);
+      return this.tournament.getTeam(this.winners[previousGames[1]]);
     }
-  }
-
-  @action
-  reset() {
-    this.picks = new Array(63);
-    this.salt = randomBytes(SALT_SIZE).toString('hex');
   }
 
   @computed get complete() {
-    return _.every(this.picks, _.isNumber);
+    return _.every(this.winners, _.isNumber);
   }
 
-  @computed get commitment() {
-    if (this.complete && this.salt) {
-      return web3.sha3(
-        this.address.replace(/^0x/, ''),
-        this.toByteBracket(),
-        this.salt
-      );
-    }
-  }
+  //@action
+  selectWinner(gameNumber, teamNumber) {
+    const oldWinner = this.winners[gameNumber];
+    this.winners[gameNumber] = teamNumber;
 
-  @computed get submissionKey() {
-    return this.address.replace(/^0x/, '') +
-      this.toByteBracket() +
-      this.salt +
-      this.commitment.replace(/^0x/, '');
-  }
-
-  @action
-  makePick(gameNumber, teamNumber) {
-    const oldPick = this.picks[gameNumber];
-    this.picks[gameNumber] = teamNumber;
-
-    if (oldPick !== teamNumber && oldPick !== undefined) {
+    if (oldWinner !== teamNumber && oldWinner !== undefined) {
       while (gameNumber < 62) {
         gameNumber = util.nextGame(gameNumber);
-        if (this.picks[gameNumber] !== oldPick) {
+        if (this.winners[gameNumber] !== oldWinner) {
           break;
         }
-        this.picks[gameNumber] = undefined;
+        this.winners[gameNumber] = undefined;
       }
     }
   }
@@ -88,22 +67,48 @@ class Bracket {
     // MSB is ignored, but setting it to 1 ensures that the value is non-zero.
     let byteBracketStr = '1';
     for (let i = 62; i >= 0; i--) {
-      byteBracketStr += this.picks[i] == this.team1InGame(i).number ? '1' : '0';
+      byteBracketStr += this.winners[i] == this.team1InGame(i).number ? '1' : '0';
     }
     return util.bitstringToBuffer(byteBracketStr).toString('hex');
   }
 
-  @action
+  //@action
   loadByteBracket(byteBracket) {
     let byteBracketStr = util.bufferToBitstring(new Buffer(byteBracket, 'hex'));
     for (let i = 0; i < 63; i++) {
       if (byteBracketStr[63 - i] === '1') {
-        this.picks[i] = this.team1InGame(i).number;
+        this.winners[i] = this.team1InGame(i).number;
       }
       else {
-        this.picks[i] = this.team2InGame(i).number;
+        this.winners[i] = this.team2InGame(i).number;
       }
     }
+  }
+}
+
+class Bracket {
+  @observable address;
+  @observable picks = new BracketSelection();
+  @observable results = new BracketSelection();
+  @observable salt;
+
+  @action
+  reset() {
+    this.picks.reset();
+    this.salt = randomBytes(SALT_SIZE).toString('hex');
+  }
+
+  @computed get commitment() {
+    if (this.picks.complete && this.salt) {
+      return web3.sha3(this.address + this.picks.toByteBracket() + this.salt, { encoding: 'hex' });
+    }
+  }
+
+  @computed get submissionKey() {
+    return this.address.slice(2) +
+      this.picks.toByteBracket() +
+      this.salt +
+      this.commitment.slice(2);
   }
 
   @action
@@ -128,19 +133,15 @@ class Bracket {
       throw Error("This submission appears to have been made by a different Ethereum client");
     }
 
-    if (web3.sha3(address, byteBracket, salt) !== "0x" + checksum) {
+    if (web3.sha3("0x" + address + byteBracket + salt, { encoding: 'hex' }) !== "0x" + checksum) {
       throw new Error("Submission key failed checksum");
     }
 
     this.address = "0x" + address;
-    this.loadByteBracket(byteBracket);
+    this.picks.loadByteBracket(byteBracket);
     this.salt = salt;
   }
 }
 
 const bracketStore = new Bracket();
 export default bracketStore;
-
-window.randomFillBracket = function() {
-  bracketStore.loadByteBracket(randomBytes(8));
-}

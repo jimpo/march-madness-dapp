@@ -1,4 +1,5 @@
 {
+  "name": "NCAA Men's Basketball 2016",
   "teams": [
     { "name": "Kansas" },
     { "name": "Austin Peay" },
@@ -23,8 +24,8 @@
     { "name": "Cincinnati" },
     { "name": "Yale" },
     { "name": "Baylor" },
-    { "name": "UNC Wilmington" },
     { "name": "Duke" },
+    { "name": "UNC Wilmington" },
     { "name": "Texas" },
     { "name": "Northern Iowa" },
     { "name": "Texas A&M" },

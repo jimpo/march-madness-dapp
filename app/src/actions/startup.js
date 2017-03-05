@@ -9,12 +9,12 @@ import web3 from '../web3';
 
 
 export function createBracket() {
-  applicationStore.screen = 'BracketScreen';
+  applicationStore.screen = 'CreateBracketScreen';
 }
 
 export function loadBracket() {
   applicationStore.error = null;
-  if (bracketStore.complete) {
+  if (bracketStore.picks.complete) {
     applicationStore.screen = 'BracketScreen';
   }
   else {
@@ -24,6 +24,20 @@ export function loadBracket() {
 
 export function doneCreatingBracket() {
   applicationStore.screen = 'SubmitBracketScreen';
+}
+
+export function submitResults() {
+  const results = "0x" + bracketStore.results.toByteBracket();
+  sendSubmitResults(results)
+    .then(action(() => {
+      contractStore.results = results;
+      applicationStore.screen = 'StartScreen';
+    }))
+    .catch((err) => applicationStore.error = err);
+}
+
+export function enterResults() {
+  applicationStore.screen = 'ResultsBracketScreen';
 }
 
 export function submissionKeyEntered(key) {
@@ -46,7 +60,6 @@ export function submitBracket() {
   submitBracketCommitment()
     .then(action(() => {
       localStorage.submissionKey = bracketStore.submissionKey;
-      bracketStore.editable = false;
       applicationStore.screen = 'BracketScreen';
     }))
     .catch((err) => applicationStore.error = err);
@@ -59,20 +72,37 @@ function submitBracketCommitment() {
       from: bracketStore.address,
       value: contractStore.entryFee
     };
-    const callback = (err, txHash) => {
+    contractStore.marchMadness.submitBracket(bracketStore.commitment, options, (err) => {
       if (err) return reject(err);
 
-      web3.eth.getTransactionReceipt(txHash, (err, {logs}) => {
+      contractStore.marchMadness.getCommitment(bracketStore.address, (err, contractCommitment) => {
         if (err) return reject(err);
 
-        const expectedTopic = contractStore.marchMadness.SubmissionAccepted().options.topics[0];
-        if (!logs || !logs[0] || !logs[0].topics || logs[0].topics[0] !== expectedTopic) {
+        if (bracketStore.commitment !== contractCommitment) {
           return reject(new Error("Submission was not accepted for unknown reason"));
         }
 
-        return resolve();
+        resolve();
       });
-    };
-    contractStore.marchMadness.submitBracket(bracketStore.commitment, options, callback);
+    });
+  });
+}
+
+function sendSubmitResults(byteBracket) {
+  return new Promise((resolve, reject) => {
+    const options = { from: bracketStore.address };
+    contractStore.marchMadness.submitResults(byteBracket, options, (err) => {
+      if (err) return reject(err);
+
+      contractStore.marchMadness.results((err, results) => {
+        if (err) return reject(err);
+
+        if (byteBracket !== results) {
+          return reject(new Error("Submission was not accepted for unknown reason"));
+        }
+
+        resolve();
+      });
+    });
   });
 }

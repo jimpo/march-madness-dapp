@@ -3,6 +3,7 @@ import _fa from 'font-awesome/less/font-awesome.less';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
+import {randomBytes} from 'crypto';
 
 import Application from './components/Application';
 import applicationStore from './stores/application';
@@ -26,3 +27,11 @@ window.addEventListener('load', () => {
 
   initialize();
 });
+
+
+window.randomFillBracket = function() {
+  bracketStore.picks.loadByteBracket(randomBytes(8));
+};
+window.randomFillResults = function() {
+  bracketStore.results.loadByteBracket(randomBytes(8));
+};
