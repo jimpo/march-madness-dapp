@@ -1,9 +1,4 @@
 import {action, observable, computed} from 'mobx';
-import _ from 'underscore';
-
-import * as ipfs from '../ipfs';
-import web3 from '../web3';
-import {abi, networks} from "../../../build/contracts/MarchMadness";
 
 
 class ContractStore {
@@ -14,43 +9,24 @@ class ContractStore {
   @observable scoringDuration;
   @observable tournamentDataIPFSHash;
   @observable tournamentStartTime;
+  @observable contestOverTime;
   @observable timeToTournamentStart;
+  @observable timeToContestOver;
+  @observable winningScore;
   @observable commitments = new Map();
-
-  constructor() {
-    const networkKey = _.max(_.keys(networks));
-    this.address = networks[networkKey].address;
-
-    const MarchMadness = web3.eth.contract(abi);
-    this.marchMadness = MarchMadness.at(this.address);
-  }
-
-  fetchCommitment(account) {
-    return new Promise((resolve, reject) => {
-      this.marchMadness.getCommitment(account, (error, commitment) => {
-        if (error) return reject(error);
-
-        this.commitments.set(account, commitment);
-        return resolve(commitment);
-      });
-    });
-  }
+  @observable scores = new Map();
+  @observable collectedWinnings = new Map();
 
   @computed get tournamentStarted() {
     return this.timeToTournamentStart === 0;
   }
 
-  contractState(property) {
-    if (!this.address) {
-      return Promise.reject(new Error("Contract address is not set"));
-    }
+  @computed get contestOver() {
+    return this.timeToContestOver === 0;
+  }
 
-    return new Promise((resolve, reject) => {
-      this.marchMadness[property]((error, value) => {
-        if (error) return reject(error);
-        return resolve(value);
-      });
-    });
+  @computed get resultsSubmitted() {
+    return this.results && this.results !== "0x0000000000000000";
   }
 }
 

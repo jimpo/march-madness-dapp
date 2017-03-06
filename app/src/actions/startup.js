@@ -1,12 +1,13 @@
 import {action} from 'mobx';
 
-import * as ipfs from '../ipfs';
 import applicationStore from '../stores/application';
 import contractStore from '../stores/contract';
 import bracketStore from '../stores/bracket';
 import tournamentStore from '../stores/tournament';
-import web3 from '../web3';
+import MarchMadnessWrapper from '../MarchMadnessWrapper';
+import {bracketAddressChanged} from './common';
 
+const marchMadness = new MarchMadnessWrapper();
 
 export function createBracket() {
   applicationStore.screen = 'CreateBracketScreen';
@@ -27,10 +28,15 @@ export function doneCreatingBracket() {
 }
 
 export function submitResults() {
-  const results = "0x" + bracketStore.results.toByteBracket();
-  sendSubmitResults(results)
-    .then(action(() => {
-      contractStore.results = results;
+  const options = {
+    byteBracket: bracketStore.results.toByteBracket(),
+    address: bracketStore.address
+  };
+  marchMadness.submitResults(options)
+    .then(() => marchMadness.scoreBracket(bracketStore.picks.toByteBracket()))
+    .then(action((score) => {
+      bracketStore.score = score;
+      contractStore.results = options.byteBracket;
       applicationStore.screen = 'StartScreen';
     }))
     .catch((err) => applicationStore.error = err);
@@ -41,68 +47,49 @@ export function enterResults() {
 }
 
 export function submissionKeyEntered(key) {
-  action(() => {
-    applicationStore.error = null;
-    try {
-      bracketStore.deserialize(key);
-    }
-    catch (e) {
-      applicationStore.error = e;
-      return;
-    }
+  applicationStore.error = null;
+  try {
+    bracketStore.deserialize(key);
+  }
+  catch (e) {
+    applicationStore.error = e;
+    return;
+  }
 
-    localStorage.submissionKey = key;
-    applicationStore.screen = 'BracketScreen';
-  })();
+  localStorage.submissionKey = key;
+
+  bracketAddressChanged()
+    .then(() => applicationStore.screen = 'BracketScreen')
+    .catch((err) => applicationStore.error = err);
 }
 
 export function submitBracket() {
-  submitBracketCommitment()
+  const options = {
+    commitment: bracketStore.commitment,
+    address: bracketStore.address,
+    entryFee: contractStore.entryFee
+  };
+  marchMadness.submitBracketCommitment(options)
     .then(action(() => {
       localStorage.submissionKey = bracketStore.submissionKey;
       applicationStore.screen = 'BracketScreen';
     }))
     .catch((err) => applicationStore.error = err);
-  //applicationStore.screen = 'SpinnerScreen';
 }
 
-function submitBracketCommitment() {
-  return new Promise((resolve, reject) => {
-    const options = {
-      from: bracketStore.address,
-      value: contractStore.entryFee
-    };
-    contractStore.marchMadness.submitBracket(bracketStore.commitment, options, (err) => {
-      if (err) return reject(err);
-
-      contractStore.marchMadness.getCommitment(bracketStore.address, (err, contractCommitment) => {
-        if (err) return reject(err);
-
-        if (bracketStore.commitment !== contractCommitment) {
-          return reject(new Error("Submission was not accepted for unknown reason"));
-        }
-
-        resolve();
-      });
-    });
-  });
+export function revealBracket() {
+  const options = {
+    byteBracket: bracketStore.picks.toByteBracket(),
+    salt: bracketStore.salt,
+    address: bracketStore.address
+  };
+  marchMadness.revealBracket(options)
+    .then((score) => contractStore.scores.set(bracketStore.address, score))
+    .catch((err) => applicationStore.error = err);
 }
 
-function sendSubmitResults(byteBracket) {
-  return new Promise((resolve, reject) => {
-    const options = { from: bracketStore.address };
-    contractStore.marchMadness.submitResults(byteBracket, options, (err) => {
-      if (err) return reject(err);
-
-      contractStore.marchMadness.results((err, results) => {
-        if (err) return reject(err);
-
-        if (byteBracket !== results) {
-          return reject(new Error("Submission was not accepted for unknown reason"));
-        }
-
-        resolve();
-      });
-    });
-  });
+export function collectWinnings() {
+  marchMadness.collectWinnings(bracketStore.address)
+    .then(() => contractStore.collectedWinnings.set(bracketStore.address, true))
+    .catch((err) => applicationStore.error = err);
 }

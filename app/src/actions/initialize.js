@@ -6,8 +6,11 @@ import contractStore from '../stores/contract';
 import bracketStore from '../stores/bracket';
 import tournamentStore from '../stores/tournament';
 import {dateToTimestamp} from '../util';
+import MarchMadnessWrapper from '../MarchMadnessWrapper';
 import web3 from '../web3';
+import {bracketAddressChanged} from './common';
 
+const marchMadness = new MarchMadnessWrapper();
 
 export function initialize() {
   return checkConnections()
@@ -55,8 +58,9 @@ function initializeBracket() {
     bracketStore.reset();
   }
 
-  return contractStore.fetchCommitment(bracketStore.address)
-    .then((commitment) => {
+  return bracketAddressChanged()
+    .then(() => {
+      const commitment = contractStore.commitments.get(bracketStore.address);
       if (commitment !== contractStore.NO_COMMITMENT && commitment !== bracketStore.commitment) {
         bracketStore.reset();
         throw new Error(
@@ -75,36 +79,38 @@ function initializeTournament() {
       tournamentStore.teams = teams;
       tournamentStore.regions = regions;
 
-      if (contractStore.results !== "0x0000000000000000") {
+      if (contractStore.resultsSubmitted) {
         bracketStore.results.loadByteBracket(contractStore.results.slice(2));
       }
     }));
 }
 
-function startTournamentCountdown() {
+function startCountdown(timeField, countdownField) {
   let intervalId;
-  const updateTimeToTournamentStart = () => {
+  const updateCountdown = () => {
     const now = dateToTimestamp(new Date());
-    if (now > contractStore.tournamentStartTime) {
-      contractStore.timeToTournamentStart = 0;
+    if (now > contractStore[timeField]) {
+      contractStore[countdownField] = 0;
       clearInterval(intervalId);
     }
     else {
-      contractStore.timeToTournamentStart = contractStore.tournamentStartTime - now;
+      contractStore[countdownField] = contractStore[timeField] - now;
     }
   };
-  intervalId = setInterval(updateTimeToTournamentStart, 5000);
-  updateTimeToTournamentStart();
+  intervalId = setInterval(updateCountdown, 5000);
+  updateCountdown();
 }
 
 function initializeContract() {
   return Promise.all([
-    contractStore.contractState('creator'),
-    contractStore.contractState('entryFee'),
-    contractStore.contractState('tournamentStartTime'),
-    contractStore.contractState('scoringDuration'),
-    contractStore.contractState('tournamentDataIPFSHash'),
-    contractStore.contractState('results')
+    marchMadness.fetchContractState('creator'),
+    marchMadness.fetchContractState('entryFee'),
+    marchMadness.fetchContractState('tournamentStartTime'),
+    marchMadness.fetchContractState('scoringDuration'),
+    marchMadness.fetchContractState('tournamentDataIPFSHash'),
+    marchMadness.fetchContractState('results'),
+    marchMadness.fetchContractState('contestOverTime'),
+    marchMadness.fetchContractState('winningScore')
   ])
     .then(action((values) => {
       contractStore.creator = values[0];
@@ -113,6 +119,13 @@ function initializeContract() {
       contractStore.scoringDuration = values[3];
       contractStore.tournamentDataIPFSHash = values[4];
       contractStore.results = values[5];
+      contractStore.contestOverTime = values[6];
+      contractStore.winningScore = values[7];
     }))
-    .then(startTournamentCountdown);
+    .then(() => {
+      startCountdown('tournamentStartTime', 'timeToTournamentStart');
+      if (!contractStore.contestOverTime.isZero()) {
+        startCountdown('contestOverTime', 'timeToContestOver');
+      }
+    });
 }

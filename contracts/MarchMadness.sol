@@ -104,7 +104,7 @@ contract MarchMadness {
         }
 
         submission.bracket = bracket;
-        submission.score = scoreBracket(bracket);
+        submission.score = ByteBracket.getBracketScore(bracket, results, scoringMask);
 
         if (submission.score > winningScore) {
             winningScore = submission.score;
@@ -142,6 +142,9 @@ contract MarchMadness {
     }
 
     function scoreBracket(bytes8 bracket) constant returns (uint8) {
+        if (results == 0) {
+            throw;
+        }
         return ByteBracket.getBracketScore(bracket, results, scoringMask);
     }
 
@@ -151,5 +154,9 @@ contract MarchMadness {
 
     function getCommitment(address account) constant returns (bytes32) {
         return submissions[account].commitment;
+    }
+
+    function hasCollectedWinnings(address account) constant returns (bool) {
+        return submissions[account].collectedWinnings;
     }
 }

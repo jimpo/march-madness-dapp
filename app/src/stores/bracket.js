@@ -47,7 +47,7 @@ class BracketSelection {
     return _.every(this.winners, _.isNumber);
   }
 
-  //@action
+  @action
   selectWinner(gameNumber, teamNumber) {
     const oldWinner = this.winners[gameNumber];
     this.winners[gameNumber] = teamNumber;
@@ -72,7 +72,7 @@ class BracketSelection {
     return util.bitstringToBuffer(byteBracketStr).toString('hex');
   }
 
-  //@action
+  @action
   loadByteBracket(byteBracket) {
     let byteBracketStr = util.bufferToBitstring(new Buffer(byteBracket, 'hex'));
     for (let i = 0; i < 63; i++) {
@@ -91,6 +91,7 @@ class Bracket {
   @observable picks = new BracketSelection();
   @observable results = new BracketSelection();
   @observable salt;
+  @observable score;
 
   @action
   reset() {

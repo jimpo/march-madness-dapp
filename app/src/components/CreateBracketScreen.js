@@ -23,7 +23,7 @@ const CreateBracketScreen = observer(function CreateBracketScreen({bracket, cont
 
   return (
     <section>
-      <TournamentStatus contract={contract}/>
+      <TournamentStatus bracket={bracket} contract={contract}/>
       <Bracket bracket={bracket.picks} editable={true}>
         {action}
       </Bracket>

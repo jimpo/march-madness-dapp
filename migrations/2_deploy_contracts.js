@@ -11,8 +11,8 @@ module.exports = function(deployer) {
   deployer.deploy(
     MarchMadness,
     1000000, // entryFee
-    dateToTimestamp(new Date()) + 120, // tournamentStartTime
-    7 * 24 * 60 * 60, // scoringDuration
+    dateToTimestamp(new Date()) + 2 * 60, // tournamentStartTime
+    2 * 60, // scoringDuration
     "QmfAA8123Kvh3cCPw6UJvDeTeU6JKMsk8K9aBkZz2w25qj" // tournamentDataIPFSHash
   );
 };
