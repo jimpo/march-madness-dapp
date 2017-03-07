@@ -10,9 +10,9 @@ module.exports = function(deployer) {
   deployer.link(ByteBracket, MarchMadness);
   deployer.deploy(
     MarchMadness,
-    1000000, // entryFee
-    dateToTimestamp(new Date()) + 2 * 60, // tournamentStartTime
-    2 * 60, // scoringDuration
+    1000000000000000000, // entryFee
+    dateToTimestamp(new Date()) + 24 * 60 * 60, // tournamentStartTime
+    24 * 60 * 60, // scoringDuration
     "QmfAA8123Kvh3cCPw6UJvDeTeU6JKMsk8K9aBkZz2w25qj" // tournamentDataIPFSHash
   );
 };

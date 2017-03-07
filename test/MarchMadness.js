@@ -134,22 +134,48 @@ contract('MarchMadness', (accounts) => {
   });
 
   describe("#revealBracket", () => {
+    const bracket = "0xffffffffffffffff";
+    const salt = "0x" + crypto.randomBytes(16).toString('hex');
+
+    beforeEach(() => {
+      const commitment =
+        web3.sha3(accounts[0] + bracket.slice(2) + salt.slice(2), { encoding: 'hex' });
+      return marchMadness.submitBracket(commitment, { value: entryFee })
+        .then(() => marchMadness.getCommitment(accounts[0]))
+        .then((contractCommitment) => assert.equal(contractCommitment, commitment));
+    });
+
+    it("stores the bracket in the contract", () => {
+      return marchMadness.revealBracket(bracket, salt)
+        .then(() => marchMadness.getBracket(accounts[0]))
+        .then((bracket_) => assert.equal(bracket_, bracket));
+    });
+
+    it("does not accept brackets that don't match the commitment", () => {
+      const incorrectSalt = "0x" + crypto.randomBytes(16).toString('hex');
+      return marchMadness.revealBracket(bracket, incorrectSalt)
+        .then(() => marchMadness.getBracket(accounts[0]))
+        .then((bracket_) => assert.equal(bracket_, '0x0000000000000000'));
+    });
+  });
+
+  describe("#scoreBracket", () => {
     const results = "0x8000000000000000";
 
     const entries = [
       {
         address: accounts[0],
-        bracket: "0xC000000000000000",
+        bracket: "0xc000000000000000",
         salt: "0x" + crypto.randomBytes(16).toString('hex')
       },
       {
         address: accounts[1],
-        bracket: "0xF000000000000000",
+        bracket: "0xf000000000000000",
         salt: "0x" + crypto.randomBytes(16).toString('hex')
       },
       {
         address: accounts[2],
-        bracket: "0xC000000000000000",
+        bracket: "0xc000000000000000",
         salt: "0x" + crypto.randomBytes(16).toString('hex')
       }
     ];
@@ -165,8 +191,9 @@ contract('MarchMadness', (accounts) => {
         const commitment =
           web3.sha3(address + bracket.slice(2) + salt.slice(2), { encoding: 'hex' });
         return marchMadness.submitBracket(commitment, { value: entryFee, from: address })
-          .then(() => marchMadness.getCommitment(address))
-          .then((contractCommitment) => assert.equal(contractCommitment, commitment));
+          .then(() => marchMadness.revealBracket(bracket, salt, { from: address }))
+          .then(() => marchMadness.getBracket(address))
+          .then((bracket_) => assert.equal(bracket_, bracket));
       });
       return Promise.all(calls)
         .then(() => waitForSeconds(1)); // Wait for tournament to start
@@ -175,7 +202,7 @@ contract('MarchMadness', (accounts) => {
     describe("before results have been submitted", () => {
       it("does not score brackets", () => {
         const {bracket, salt, address} = entries[0];
-        return marchMadness.revealBracket(bracket, salt, { from: address })
+        return marchMadness.scoreBracket(address)
           .then(() => marchMadness.getScore(address))
           .then((score) => assert.equal(score, 0));
       });
@@ -188,18 +215,10 @@ contract('MarchMadness', (accounts) => {
           .then((contractResults) => assert.equal(contractResults, results));
       });
 
-      it("does not score brackets that don't match the commitment", () => {
-        const {salt, address} = entries[0];
-        const bracket = results;
-        return marchMadness.revealBracket(bracket, salt, { from: address })
-          .then(() => marchMadness.getScore(address))
-          .then((score) => assert.equal(score, 0));
-      });
-
       it("does not score brackets after the scoring period ends", () => {
         const {bracket, salt, address} = entries[0];
         return waitForSeconds(1)
-          .then(() => marchMadness.revealBracket(bracket, salt, { from: address }))
+          .then(() => marchMadness.scoreBracket(address))
           .then(() => marchMadness.getScore(address))
           .then((score) => assert.equal(score, 0));
       });
@@ -210,7 +229,7 @@ contract('MarchMadness', (accounts) => {
         entries[2].expectedScore = 32 * 5;
 
         const assertions = entries.map(({bracket, salt, address, expectedScore}) => {
-          return marchMadness.revealBracket(bracket, salt, { from: address })
+          return marchMadness.scoreBracket(address)
             .then(() => marchMadness.getScore(address))
             .then((score) => assert.equal(score, expectedScore));
         });
@@ -221,17 +240,17 @@ contract('MarchMadness', (accounts) => {
         return Promise.resolve()
           .then(() => {
             const {bracket, salt, address} = entries[0];
-            return marchMadness.revealBracket(bracket, salt, { from: address })
+            return marchMadness.scoreBracket(address)
               .then(({logs}) => assert.equal(logs[0].event, 'NewWinner'));
           })
           .then(() => {
             const {bracket, salt, address} = entries[1];
-            return marchMadness.revealBracket(bracket, salt, { from: address })
+            return marchMadness.scoreBracket(address)
               .then(({logs}) => assert.lengthOf(logs, 0));
           })
           .then(() => {
             const {bracket, salt, address} = entries[2];
-            return marchMadness.revealBracket(bracket, salt, { from: address })
+            return marchMadness.scoreBracket(address)
               .then(({logs}) => assert.equal(logs[0].event, 'NewWinner'));
           });
       });
@@ -244,17 +263,17 @@ contract('MarchMadness', (accounts) => {
     const entries = [
       {
         address: accounts[0],
-        bracket: "0xC000000000000000",
+        bracket: "0xc000000000000000",
         salt: "0x" + crypto.randomBytes(16).toString('hex')
       },
       {
         address: accounts[1],
-        bracket: "0xF000000000000000",
+        bracket: "0xf000000000000000",
         salt: "0x" + crypto.randomBytes(16).toString('hex')
       },
       {
         address: accounts[2],
-        bracket: "0xC000000000000000",
+        bracket: "0xc000000000000000",
         salt: "0x" + crypto.randomBytes(16).toString('hex')
       }
     ];
@@ -270,8 +289,9 @@ contract('MarchMadness', (accounts) => {
         const commitment =
           web3.sha3(address + bracket.slice(2) + salt.slice(2), { encoding: 'hex' });
         return marchMadness.submitBracket(commitment, { value: entryFee, from: address })
-          .then(() => marchMadness.getCommitment(address))
-          .then((contractCommitment) => assert.equal(contractCommitment, commitment));
+          .then(() => marchMadness.revealBracket(bracket, salt, { from: address }))
+          .then(() => marchMadness.getBracket(address))
+          .then((bracket_) => assert.equal(bracket_, bracket));
       });
       return Promise.all(calls)
         .then(() => waitForSeconds(1)) // Wait for tournament to start
@@ -285,7 +305,7 @@ contract('MarchMadness', (accounts) => {
     it("does not allow withdrawals before the scoring period ends", () => {
       const {bracket, salt, address} = entries[0];
       let initialBalance = web3.eth.getBalance(address).toString();
-      return marchMadness.revealBracket(bracket, salt, { from: address, gasPrice: 0 })
+      return marchMadness.scoreBracket(address, { gasPrice: 0 })
         .then(({logs}) => assert.equal(logs[0].event, 'NewWinner'))
         .then(() => marchMadness.collectWinnings({ from: address, gasPrice: 0 }))
         .then(() => {
@@ -299,7 +319,7 @@ contract('MarchMadness', (accounts) => {
       entries[2].expectedWinnings = entryFee * 3 / 2;
 
       const scoringCalls = entries.map(({bracket, salt, address}) => {
-        return marchMadness.revealBracket(bracket, salt, { from: address, gasPrice: 0 });
+        return marchMadness.scoreBracket(address, { gasPrice: 0 });
       });
 
       return Promise.all(scoringCalls)
