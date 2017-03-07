@@ -69,7 +69,7 @@ class TournamentStatus extends React.Component {
 
   // TODO: Show size of pool, # of entrants
   render() {
-    const {contract} = this.props;
+    const {bracket, contract} = this.props;
     if (contract.contestOver) {
       return (
         <div className="well">

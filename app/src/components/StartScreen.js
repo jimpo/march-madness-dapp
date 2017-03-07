@@ -14,7 +14,7 @@ const Requirements  = observer(function Requirements({application}) {
     },
     {
       key: "ipfs",
-      text: <span>A local <a href="https://ipfs.io" target="_blank">IPFS</a> gateway.</span>,
+      text: <span>An <a href="https://ipfs.io" target="_blank">IPFS</a> gateway.</span>,
       help: <span>See the <a href="https://ipfs.io/docs/getting-started/" target="_blank">IPFS guide</a> to get started.</span>,
       ok: application.ipfsNodeConnected
     }

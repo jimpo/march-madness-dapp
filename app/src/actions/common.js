@@ -11,10 +11,7 @@ export function bracketAddressChanged() {
   return marchMadness.hasCollectedWinnings(address)
     .then((result) => contractStore.collectedWinnings.set(address, result))
     .then(() => marchMadness.fetchCommitment(address))
-    .then((commitment) => {
-      contractStore.commitments.set(address, commitment);
-
-    })
+    .then((commitment) => contractStore.commitments.set(address, commitment))
     .then(() => {
       if (bracketStore.picks.complete && bracketStore.results.complete) {
         scoreBracket();
@@ -26,7 +23,7 @@ function scoreBracket() {
   return marchMadness.fetchScore(bracketStore.address)
     .then((score) => {
       if (score.isZero()) {
-        return marchMadness.scoreBracket(bracketStore.picks.toByteBracket());
+        return marchMadness.getBracketScore(bracketStore.picks.toByteBracket());
       }
       else {
         contractStore.scores.set(bracketStore.address, score);

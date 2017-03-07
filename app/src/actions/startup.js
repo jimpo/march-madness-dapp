@@ -33,7 +33,7 @@ export function submitResults() {
     address: bracketStore.address
   };
   marchMadness.submitResults(options)
-    .then(() => marchMadness.scoreBracket(bracketStore.picks.toByteBracket()))
+    .then(() => marchMadness.getBracketScore(bracketStore.picks.toByteBracket()))
     .then(action((score) => {
       bracketStore.score = score;
       contractStore.results = options.byteBracket;
@@ -84,6 +84,7 @@ export function revealBracket() {
     address: bracketStore.address
   };
   marchMadness.revealBracket(options)
+    .then(() => marchMadness.scoreBracket(options.address))
     .then((score) => contractStore.scores.set(bracketStore.address, score))
     .catch((err) => applicationStore.error = err);
 }

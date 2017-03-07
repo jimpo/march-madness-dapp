@@ -39,6 +39,15 @@ export default class MarchMadnessWrapper {
     });
   }
 
+  fetchBracket(account) {
+    return new Promise((resolve, reject) => {
+      this.marchMadness.getBracket(account, (error, byteBracket) => {
+        if (error) return reject(error);
+        return resolve(byteBracket);
+      });
+    });
+  }
+
   hasCollectedWinnings(account) {
     return new Promise((resolve, reject) => {
       this.marchMadness.hasCollectedWinnings(account, (error, result) => {
@@ -110,9 +119,9 @@ export default class MarchMadnessWrapper {
       });
   }
 
-  scoreBracket(byteBracket) {
+  getBracketScore(byteBracket) {
     return new Promise((resolve, reject) => {
-      this.marchMadness.scoreBracket("0x" + byteBracket, (err, score) => {
+      this.marchMadness.getBracketScore("0x" + byteBracket, (err, score) => {
         if (err) return reject(err);
         resolve(score);
       });
