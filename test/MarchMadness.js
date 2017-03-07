@@ -1,9 +1,10 @@
 const crypto = require('crypto');
 
+const FederatedOracleBytes8 = artifacts.require("./FederatedOracleBytes8.sol");
 const MarchMadness = artifacts.require("./MarchMadness.sol");
 
 contract('MarchMadness', (accounts) => {
-  let marchMadness;
+  let marchMadness, federatedOracle;
 
   const defaultEntryFee = 100000000000;
   const defaultTournamentStartTime = () => dateToTimestamp(new Date()) + 10;
@@ -12,25 +13,40 @@ contract('MarchMadness', (accounts) => {
   let entryFee, tournamentStartTime, scoringDuration;
   resetDefaultContractParameters();
 
+  const results = "0x8000000000000000";
+
+  before(() => {
+    return FederatedOracleBytes8.new(1, 1)
+      .then((instance) => federatedOracle = instance)
+      .then(() => federatedOracle.addVoter(accounts[0]))
+      .then(() => federatedOracle.submitValue(results))
+      .then(() => federatedOracle.finalValue())
+      .then((value) => assert.equal(value, results));
+  });
+
   beforeEach(() => {
-    return MarchMadness.new(entryFee, tournamentStartTime(), scoringDuration, "IPFS_HASH")
+    return MarchMadness.new(
+      entryFee,
+      tournamentStartTime(),
+      scoringDuration,
+      "IPFS_HASH",
+      federatedOracle.address
+    )
       .then((instance) => marchMadness = instance);
   });
 
   describe("constructor", () => {
     it("sets initial state", () => {
       const calls = [
-        marchMadness.creator(),
         marchMadness.entryFee(),
         marchMadness.tournamentStartTime(),
         marchMadness.scoringDuration()
       ];
       return Promise.all(calls)
         .then((results) => {
-          assert.equal(results[0], accounts[0]);
-          assert.equal(results[1], entryFee);
-          assert.equal(results[2], tournamentStartTime());
-          assert.equal(results[3], scoringDuration);
+          assert.equal(results[0], entryFee);
+          assert.equal(results[1], tournamentStartTime());
+          assert.equal(results[2], scoringDuration);
         });
     });
   });
@@ -77,12 +93,10 @@ contract('MarchMadness', (accounts) => {
     });
   });
 
-  describe("#submitResults", () => {
-    const results = "0x8000000000000000";
-
+  describe("#startScoring", () => {
     describe("before the tournament has started", () => {
       it("does nothing", () => {
-        return marchMadness.submitResults(results)
+        return marchMadness.startScoring()
           .then(() => marchMadness.results())
           .then((contractResults) => {
             assert.equal(contractResults, '0x0000000000000000');
@@ -97,9 +111,9 @@ contract('MarchMadness', (accounts) => {
       after(resetDefaultContractParameters);
 
       it("assigns the results and contestOverTime and logs TournamentOver", () => {
-        return marchMadness.submitResults(results)
-          .then((txDetails) => {
-            assert.equal(txDetails.logs[0].event, 'TournamentOver');
+        return marchMadness.startScoring()
+          .then(({logs}) => {
+            assert.equal(logs[0].event, 'TournamentOver');
 
             const calls = [
               marchMadness.results(),
@@ -114,21 +128,10 @@ contract('MarchMadness', (accounts) => {
           });
       });
 
-      it("rejects submissions that are not from the contract creator", () => {
-        return marchMadness.submitResults(results, { from: accounts[1] })
-          .then(() => marchMadness.results())
-          .then((contractResults) => {
-            assert.equal(contractResults, '0x0000000000000000');
-          });
-      });
-
-      it("does not allow multiple submissions", () => {
-        return marchMadness.submitResults(results)
-          .then(() => marchMadness.submitResults('0x8000000000000001'))
-          .then(() => marchMadness.results())
-          .then((contractResults) => {
-            assert.equal(contractResults, results);
-          });
+      it("can only be called once", () => {
+        return marchMadness.startScoring()
+          .then(() => marchMadness.startScoring())
+          .then(({logs}) => assert.lengthOf(logs, 0));
       });
     });
   });
@@ -160,8 +163,6 @@ contract('MarchMadness', (accounts) => {
   });
 
   describe("#scoreBracket", () => {
-    const results = "0x8000000000000000";
-
     const entries = [
       {
         address: accounts[0],
@@ -210,7 +211,7 @@ contract('MarchMadness', (accounts) => {
 
     describe("after results have been submitted", () => {
       beforeEach(() => {
-        return marchMadness.submitResults(results)
+        return marchMadness.startScoring()
           .then(() => marchMadness.results())
           .then((contractResults) => assert.equal(contractResults, results));
       });
@@ -258,8 +259,6 @@ contract('MarchMadness', (accounts) => {
   });
 
   describe("#collectWinnings", () => {
-    const results = "0x8000000000000000";
-
     const entries = [
       {
         address: accounts[0],
@@ -296,7 +295,7 @@ contract('MarchMadness', (accounts) => {
       return Promise.all(calls)
         .then(() => waitForSeconds(1)) // Wait for tournament to start
         .then(() => {
-          return marchMadness.submitResults(results)
+          return marchMadness.startScoring()
             .then(() => marchMadness.results())
             .then((contractResults) => assert.equal(contractResults, results));
         });

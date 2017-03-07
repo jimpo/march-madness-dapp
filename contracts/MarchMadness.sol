@@ -1,6 +1,7 @@
 pragma solidity ^0.4.4;
 
 import "./ByteBracket.sol";
+import "./FederatedOracleBytes8.sol";
 
 /**
  * @title March Madness bracket pool smart contract
@@ -26,6 +27,8 @@ contract MarchMadness {
     event NewWinner(address winner, uint8 score);
     event TournamentOver();
 
+    FederatedOracleBytes8 resultsOracle;
+
 	mapping(address => Submission) submissions;
 
     // Amount that winners will collect
@@ -36,9 +39,6 @@ contract MarchMadness {
 
     // Data derived from results used by bracket scoring algorithm
     uint64 private scoringMask;
-
-    // The address of the result oracle
-    address public creator;
 
     // Fee in wei required to enter a bracket
     uint public entryFee;
@@ -65,13 +65,14 @@ contract MarchMadness {
         uint entryFee_,
         uint tournamentStartTime_,
         uint scoringDuration_,
-        string tournamentDataIPFSHash_
+        string tournamentDataIPFSHash_,
+        address oracleAddress
     ) {
-        creator = msg.sender;
 		entryFee = entryFee_;
         tournamentStartTime = tournamentStartTime_;
         scoringDuration = scoringDuration_;
         tournamentDataIPFSHash = tournamentDataIPFSHash_;
+        resultsOracle = FederatedOracleBytes8(oracleAddress);
 	}
 
     function submitBracket(bytes32 commitment) payable {
@@ -91,18 +92,20 @@ contract MarchMadness {
         SubmissionAccepted(msg.sender);
     }
 
-    function submitResults(bytes8 results_) returns (bool) {
+    function startScoring() returns (bool) {
         if (results != 0) {
             return false;
         }
         if (now < tournamentStartTime) {
             return false;
         }
-        if (msg.sender != creator) {
+
+        bytes8 oracleValue = resultsOracle.finalValue();
+        if (oracleValue == 0) {
             return false;
         }
 
-        results = results_;
+        results = oracleValue;
         scoringMask = ByteBracket.getScoringMask(results);
         contestOverTime = now + scoringDuration;
         TournamentOver();
