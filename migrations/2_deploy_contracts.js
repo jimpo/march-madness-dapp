@@ -1,4 +1,5 @@
 var ByteBracket = artifacts.require("./ByteBracket.sol");
+var FederatedOracleBytes8 = artifacts.require("./FederatedOracleBytes8.sol");
 var MarchMadness = artifacts.require("./MarchMadness.sol");
 
 function dateToTimestamp(date) {
@@ -6,6 +7,7 @@ function dateToTimestamp(date) {
 }
 
 module.exports = function(deployer) {
+  deployer.deploy(FederatedOracleBytes8);
   deployer.deploy(ByteBracket);
   deployer.link(ByteBracket, MarchMadness);
   deployer.deploy(
