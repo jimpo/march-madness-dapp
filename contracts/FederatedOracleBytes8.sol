@@ -1,5 +1,6 @@
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.8;
 
+/// @title Oracle contract where m of n predetermined voters determine a value
 contract FederatedOracleBytes8 {
     struct Voter {
         bool isVoter;
@@ -7,10 +8,11 @@ contract FederatedOracleBytes8 {
     }
 
     event VoterAdded(address account);
+    event VoteSubmitted(address account, bytes8 value);
     event ValueFinalized(bytes8 value);
 
-    mapping(address => Voter) voters;
-    mapping(bytes8 => uint8) votes;
+    mapping(address => Voter) public voters;
+    mapping(bytes8 => uint8) public votes;
 
     uint8 public m;
     uint8 public n;
@@ -54,6 +56,8 @@ contract FederatedOracleBytes8 {
 
         voter.hasVoted = true;
         votes[value]++;
+        VoteSubmitted(msg.sender, value);
+
         if (votes[value] == m) {
             finalValue = value;
             ValueFinalized(value);

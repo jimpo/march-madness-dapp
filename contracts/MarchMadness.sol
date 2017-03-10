@@ -1,4 +1,4 @@
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.8;
 
 import "./ByteBracket.sol";
 import "./FederatedOracleBytes8.sol";

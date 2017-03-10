@@ -7,8 +7,8 @@ const MarchMadness = web3.eth.contract(abi);
 
 export default class MarchMadnessWrapper {
   constructor() {
-    const networkKey = _.max(_.keys(networks));
-    this.address = networks[networkKey].address;
+    this.network = _.last(_.keys(networks));
+    this.address = networks[this.network].address;
     this.marchMadness = MarchMadness.at(this.address);
   }
 

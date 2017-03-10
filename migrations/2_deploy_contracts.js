@@ -7,14 +7,17 @@ function dateToTimestamp(date) {
 }
 
 module.exports = function(deployer) {
-  deployer.deploy(FederatedOracleBytes8);
-  deployer.deploy(ByteBracket);
-  deployer.link(ByteBracket, MarchMadness);
-  deployer.deploy(
-    MarchMadness,
-    1000000000000000000, // entryFee
-    dateToTimestamp(new Date()) + 24 * 60 * 60, // tournamentStartTime
-    24 * 60 * 60, // scoringDuration
-    "QmfAA8123Kvh3cCPw6UJvDeTeU6JKMsk8K9aBkZz2w25qj" // tournamentDataIPFSHash
-  );
+  return deployer.deploy(FederatedOracleBytes8, 1, 1)
+    .then(() => deployer.deploy(ByteBracket))
+    .then(() => deployer.link(ByteBracket, MarchMadness))
+    .then(() => {
+      return deployer.deploy(
+        MarchMadness,
+        1000000000000000, // entryFee
+        dateToTimestamp(new Date()) + 24 * 60 * 60, // tournamentStartTime
+        24 * 60 * 60, // scoringDuration
+        "QmfAA8123Kvh3cCPw6UJvDeTeU6JKMsk8K9aBkZz2w25qj", // tournamentDataIPFSHash
+        FederatedOracleBytes8.address // oracleAddress
+      );
+    });
 };

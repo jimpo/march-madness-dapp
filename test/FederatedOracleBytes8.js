@@ -87,7 +87,7 @@ contract('FederatedOracleBytes8', (accounts) => {
         .then(() => federatedOracle.finalValue())
         .then((value) => assert.equal(value, "0x0000000000000000"))
         .then(() => federatedOracle.submitValue("0x1111111111111111", { from: accounts[3] }))
-        .then(({logs}) => assert.equal(logs[0].event, 'ValueFinalized'))
+        .then(({logs}) => assert.equal(logs[1].event, 'ValueFinalized'))
         .then(() => federatedOracle.finalValue())
         .then((value) => assert.equal(value, "0x1111111111111111"));
     });

@@ -7,16 +7,19 @@ import bracketStore from '../stores/bracket';
 import tournamentStore from '../stores/tournament';
 import {dateToTimestamp} from '../util';
 import MarchMadnessWrapper from '../MarchMadnessWrapper';
+import OracleWrapper from '../OracleWrapper';
 import web3 from '../web3';
 import {bracketAddressChanged} from './common';
 
 const marchMadness = new MarchMadnessWrapper();
+const oracle = new OracleWrapper();
 
 export function initialize() {
-  return checkConnections()
+  return waitForConnections()
     .then(initializeContract)
     .then(initializeTournament)
     .then(initializeBracket)
+    .then(initializeOracle)
     .catch((error) => {
       applicationStore.error = error;
       console.error(error);
@@ -24,18 +27,48 @@ export function initialize() {
 }
 
 function checkConnections() {
-  return Promise.all([
-    applicationStore.checkEthereumConnection(),
-    applicationStore.checkIpfsConnection()
-  ])
+  let error = null;
+
+  return Promise.resolve()
     .then(() => {
-      if (!applicationStore.ethereumNodeConnected) {
-        throw Error("See below for instructions on connecting to the Ethereum network");
+      let ethereumError = null;
+      if (!web3.isConnected()) {
+        ethereumError = new Error("See below for instructions on connecting to the Ethereum network");
       }
-      if (!applicationStore.ipfsNodeConnected) {
-        throw Error("See below for instructions on running an IPFS node");
+      else if (web3.version.network !== marchMadness.network) {
+        ethereumError = new Error("The Ethereum node is connected to the wrong network");
       }
-    });
+
+      applicationStore.ethereumNodeConnected = !ethereumError;
+      error = error || ethereumError;
+    })
+    .then(() => {
+      return ipfs.isGatewayAvailable()
+        .then((isAvailable) => {
+          applicationStore.ipfsNodeConnected = isAvailable;
+          if (!isAvailable) {
+            error = error || new Error("See below for instructions on running an IPFS node");
+          }
+        });
+    })
+    .then(() => applicationStore.error = error);
+}
+
+function waitForConnections() {
+  return new Promise((resolve) => {
+    let intervalId;
+    const repeatedCheck = () => {
+      checkConnections()
+        .then(() => {
+          if (applicationStore.ethereumNodeConnected && applicationStore.ipfsNodeConnected) {
+            clearInterval(intervalId);
+            resolve();
+          }
+        });
+    };
+    intervalId = setInterval(repeatedCheck, 1000);
+    repeatedCheck();
+  });
 }
 
 function initializeBracket() {
@@ -49,12 +82,7 @@ function initializeBracket() {
   }
 
   if (!bracketStore.address) {
-    const defaultAddress = web3.eth.defaultAccount || web3.eth.accounts[0];
-    if (!defaultAddress) {
-      throw Error("Cannot find default Ethereum account");
-    }
-
-    bracketStore.address = defaultAddress;
+    bracketStore.address = contractStore.account;
     bracketStore.reset();
   }
 
@@ -102,8 +130,12 @@ function startCountdown(timeField, countdownField) {
 }
 
 function initializeContract() {
+  contractStore.account = web3.eth.defaultAccount || web3.eth.accounts[0];
+  if (!contractStore.account) {
+    throw Error("Cannot find default Ethereum account");
+  }
+
   return Promise.all([
-    marchMadness.fetchContractState('creator'),
     marchMadness.fetchContractState('entryFee'),
     marchMadness.fetchContractState('tournamentStartTime'),
     marchMadness.fetchContractState('scoringDuration'),
@@ -113,14 +145,13 @@ function initializeContract() {
     marchMadness.fetchContractState('winningScore')
   ])
     .then(action((values) => {
-      contractStore.creator = values[0];
-      contractStore.entryFee = values[1];
-      contractStore.tournamentStartTime = values[2];
-      contractStore.scoringDuration = values[3];
-      contractStore.tournamentDataIPFSHash = values[4];
-      contractStore.results = values[5];
-      contractStore.contestOverTime = values[6];
-      contractStore.winningScore = values[7];
+      contractStore.entryFee = values[0];
+      contractStore.tournamentStartTime = values[1];
+      contractStore.scoringDuration = values[2];
+      contractStore.tournamentDataIPFSHash = values[3];
+      contractStore.results = values[4];
+      contractStore.contestOverTime = values[5];
+      contractStore.winningScore = values[6];
     }))
     .then(() => {
       startCountdown('tournamentStartTime', 'timeToTournamentStart');
@@ -128,4 +159,12 @@ function initializeContract() {
         startCountdown('contestOverTime', 'timeToContestOver');
       }
     });
+}
+
+function initializeOracle() {
+  return oracle.voterStatus(contractStore.account)
+    .then(action(([isVoter, hasVoted]) => {
+      contractStore.oracleIsVoter = isVoter;
+      contractStore.oracleHasVoter = hasVoted;
+    }));
 }

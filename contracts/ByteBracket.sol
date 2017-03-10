@@ -1,4 +1,4 @@
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.8;
 
 // This library can be used to score byte brackets. Byte brackets are a succinct encoding of a
 // 64 team bracket into an 8-byte array. The tournament results are encoded in the same format and

@@ -4,7 +4,10 @@ import {action, observable, computed} from 'mobx';
 class ContractStore {
   NO_COMMITMENT = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
-  @observable creator;
+  @observable account;
+  @observable oracleIsVoter;
+  @observable oracleHasVoted;
+
   @observable entryFee;
   @observable scoringDuration;
   @observable tournamentDataIPFSHash;
