@@ -1,10 +1,7 @@
 import {action} from 'mobx';
 
 import * as ipfs from '../ipfs';
-import applicationStore from '../stores/application';
-import contractStore from '../stores/contract';
-import bracketStore from '../stores/bracket';
-import tournamentStore from '../stores/tournament';
+import {applicationStore, bracketStore, contractStore, tournamentStore} from '../stores';
 import {dateToTimestamp} from '../util';
 import MarchMadnessWrapper from '../MarchMadnessWrapper';
 import OracleWrapper from '../OracleWrapper';

@@ -8,11 +8,7 @@ import ReactDOM from 'react-dom';
 import {randomBytes} from 'crypto';
 
 import Application from './components/Application';
-import applicationStore from './stores/application';
-import bracketStore from './stores/bracket';
-import contractStore from './stores/contract';
-import tournamentStore from './stores/tournament';
-
+import {applicationStore, bracketStore, contractStore, tournamentStore} from './stores';
 import {initialize} from './actions/initialize';
 
 

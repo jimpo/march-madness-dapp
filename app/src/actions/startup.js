@@ -1,9 +1,6 @@
 import {action} from 'mobx';
 
-import applicationStore from '../stores/application';
-import contractStore from '../stores/contract';
-import bracketStore from '../stores/bracket';
-import tournamentStore from '../stores/tournament';
+import {applicationStore, bracketStore, contractStore, tournamentStore} from '../stores';
 import MarchMadnessWrapper from '../MarchMadnessWrapper';
 import {bracketAddressChanged} from './common';
 

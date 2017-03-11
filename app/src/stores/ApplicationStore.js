@@ -3,7 +3,7 @@
 import {observable, computed} from 'mobx';
 import React from 'react';
 
-class ApplicationStore {
+export default class ApplicationStore {
   @observable error: Error;
   @observable ethereumNodeConnected: boolean;
   @observable ipfsNodeConnected: boolean;
@@ -15,5 +15,3 @@ class ApplicationStore {
     }
   }
 }
-
-export default new ApplicationStore();

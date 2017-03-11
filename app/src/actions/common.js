@@ -1,7 +1,6 @@
 // TODO: Refactor this file away
 
-import contractStore from '../stores/contract';
-import bracketStore from '../stores/bracket';
+import {bracketStore, contractStore} from '../stores';
 import MarchMadnessWrapper from '../MarchMadnessWrapper';
 
 const marchMadness = new MarchMadnessWrapper();
