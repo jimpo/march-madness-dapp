@@ -1,6 +1,6 @@
 import _ from 'underscore';
 
-import web3 from './web3';
+import {web3} from './web3';
 import {abi, networks} from "../../build/contracts/FederatedOracleBytes8";
 
 const FederatedOracleBytes8 = web3.eth.contract(abi);

@@ -7,7 +7,7 @@ import _ from 'underscore';
 import * as util from '../util';
 import BracketSelection from '../models/BracketSelection';
 import type TournamentStore from './TournamentStore';
-import web3 from '../web3';
+import {web3} from '../web3';
 
 const SALT_SIZE = 16;
 

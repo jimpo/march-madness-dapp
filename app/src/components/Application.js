@@ -1,3 +1,4 @@
+import classNames from 'classnames';
 import {observer} from 'mobx-react';
 import React from 'react';
 
@@ -9,13 +10,21 @@ import SubmitBracketScreen from './SubmitBracketScreen';
 import LoadBracketScreen from './LoadBracketScreen';
 
 
-const ErrorDisplay = observer(function ErrorDisplay({application}) {
-  if (application.errorMessage) {
-    return <div className="alert alert-warning">{application.errorMessage}</div>;
+const AlertDisplay = observer(function AlertDisplay({application}) {
+  if (application.alertMessage) {
+    return (
+      <div className={classNames('alert', 'alert-dismissable', `alert-${application.alertType}`)}>
+        <button
+          type="button"
+          className="close"
+          onClick={() => application.clearAlert()}>
+          &times;
+        </button>
+        {application.alertMessage}
+      </div>
+    );
   }
-  else {
-    return null;
-  }
+  return null;
 });
 
 @observer
@@ -46,7 +55,7 @@ class Application extends React.Component {
         <header className="page-header">
           <h1>Ethereum Bracket Challenge {subheader}</h1>
         </header>
-        <ErrorDisplay application={application}/>
+        <AlertDisplay application={application}/>
         {this._renderMainComponent()}
       </div>
     );

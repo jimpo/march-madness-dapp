@@ -88,3 +88,24 @@ export function breakDownTimeInterval(seconds: number)
 
   return {days, hours, minutes, seconds};
 }
+
+export function waitForCondition(predicate: () => Promise<boolean>): Promise<void> {
+  return new Promise((resolve, reject) => {
+    let intervalId;
+    const check = () => {
+      predicate()
+        .then((result) => {
+          if (result) {
+            clearInterval(intervalId);
+            resolve();
+          }
+        })
+        .catch((err) => {
+          clearInterval(intervalId);
+          reject(err);
+        });
+    };
+    intervalId = setInterval(check, 1000);
+    check();
+  });
+}

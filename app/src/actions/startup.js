@@ -1,22 +1,28 @@
+// @flow
+
 import {action} from 'mobx';
 
 import {applicationStore, bracketStore, contractStore, tournamentStore} from '../stores';
 import MarchMadnessWrapper from '../MarchMadnessWrapper';
 import {bracketAddressChanged} from './common';
+import {waitForConfirmation} from '../web3';
 
 const marchMadness = new MarchMadnessWrapper();
 
-export function createBracket(): void {
+export function createBracket() {
   applicationStore.screen = 'CreateBracketScreen';
 }
 
-export function loadBracket(): void {
-  applicationStore.error = null;
-  if (bracketStore.picks.complete) {
+export function loadBracket() {
+  applicationStore.clearAlert();
+  if (!bracketStore.picks.complete) {
+    applicationStore.screen = 'LoadBracketScreen';
+  }
+  else if (!contractStore.commitments.get(bracketStore.address)) {
     applicationStore.screen = 'BracketScreen';
   }
   else {
-    applicationStore.screen = 'LoadBracketScreen';
+    applicationStore.screen = 'CreateBracketScreen';
   }
 }
 
@@ -25,6 +31,8 @@ export function doneCreatingBracket() {
 }
 
 export function submitResults() {
+  applicationStore.alert('info', "Submiting to the Ethereum network...");
+
   const options = {
     byteBracket: bracketStore.results.toByteBracket(),
     address: bracketStore.address
@@ -34,33 +42,35 @@ export function submitResults() {
     .then(action((score) => {
       bracketStore.score = score;
       contractStore.results = options.byteBracket;
+      applicationStore.alert('success', "Your submission has been accepted");
       applicationStore.screen = 'StartScreen';
     }))
-    .catch((err) => applicationStore.error = err);
+    .catch((err) => applicationStore.alertError(err));
 }
 
 export function enterResults() {
   applicationStore.screen = 'ResultsBracketScreen';
 }
 
-export function submissionKeyEntered(key) {
-  applicationStore.error = null;
+export function submissionKeyEntered(key: string) {
   try {
     bracketStore.deserialize(key);
   }
   catch (e) {
-    applicationStore.error = e;
+    applicationStore.alertError(e);
     return;
   }
 
-  localStorage.submissionKey = key;
+  localStorage.setItem('submissionKey', key);
 
   bracketAddressChanged()
-    .then(() => applicationStore.screen = 'BracketScreen')
-    .catch((err) => applicationStore.error = err);
+    .then(() => this.loadBracket())
+    .catch((err) => applicationStore.alertError(err));
 }
 
 export function submitBracket() {
+  applicationStore.alert('info', "Submiting to the Ethereum network...");
+
   const options = {
     commitment: bracketStore.commitment,
     address: bracketStore.address,
@@ -68,10 +78,11 @@ export function submitBracket() {
   };
   marchMadness.submitBracketCommitment(options)
     .then(action(() => {
-      localStorage.submissionKey = bracketStore.submissionKey;
+      localStorage.setItem('submissionKey', bracketStore.submissionKey);
+      applicationStore.alert('success', "Your submission has been accepted");
       applicationStore.screen = 'BracketScreen';
     }))
-    .catch((err) => applicationStore.error = err);
+    .catch((err) => applicationStore.alertError(err));
 }
 
 export function revealBracket() {
@@ -83,11 +94,11 @@ export function revealBracket() {
   marchMadness.revealBracket(options)
     .then(() => marchMadness.scoreBracket(options.address))
     .then((score) => contractStore.scores.set(bracketStore.address, score))
-    .catch((err) => applicationStore.error = err);
+    .catch((err) => applicationStore.alertError(err));
 }
 
 export function collectWinnings() {
   marchMadness.collectWinnings(bracketStore.address)
     .then(() => contractStore.collectedWinnings.set(bracketStore.address, true))
-    .catch((err) => applicationStore.error = err);
+    .catch((err) => applicationStore.alertError(err));
 }

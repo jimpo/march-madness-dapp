@@ -1,4 +1,4 @@
-const GATEWAY_URL = "http://gateway.ipfs.io";
+const GATEWAY_URL = "https://gateway.ipfs.io";
 
 // This is the IPFS readme that comes with go-ipfs when this code written.
 const README_PATH = "QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/readme";

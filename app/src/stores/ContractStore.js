@@ -1,7 +1,7 @@
 import {action, observable, computed} from 'mobx';
 
 
-class ContractStore {
+export default class ContractStore {
   NO_COMMITMENT = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
   @observable account;
@@ -32,5 +32,3 @@ class ContractStore {
     return this.results && this.results !== "0x0000000000000000";
   }
 }
-
-export default new ContractStore();

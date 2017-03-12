@@ -1,6 +1,6 @@
 import _ from 'underscore';
 
-import web3 from './web3';
+import {web3, waitForConfirmation} from './web3';
 import {abi, networks} from "../../build/contracts/MarchMadness";
 
 const MarchMadness = web3.eth.contract(abi);
@@ -58,44 +58,43 @@ export default class MarchMadnessWrapper {
   }
 
   submitBracketCommitment({ commitment, address, entryFee }) {
-    return new Promise((resolve, reject) => {
+    const submitBracketPromise = new Promise((resolve, reject) => {
       const options = {
         from: address,
         value: entryFee
       };
-      this.marchMadness.submitBracket(commitment, options, (err) => {
+      this.marchMadness.submitBracket(commitment, options, (err, txHash) => {
         if (err) return reject(err);
-
-        this.marchMadness.getCommitment(address, (err, contractCommitment) => {
-          if (err) return reject(err);
-
-          if (commitment !== contractCommitment) {
-            return reject(new Error("Submission was not accepted for unknown reason"));
-          }
-
-          resolve();
-        });
+        resolve(txHash);
       });
     });
+
+    return submitBracketPromise
+      .then((txHash) => waitForConfirmation(txHash))
+      .then(() => this.fetchCommitment(address))
+      .then((contractCommitment) => {
+        if (commitment !== contractCommitment) {
+          throw Error("Submission was not accepted for unknown reason");
+        }
+      });
   }
 
   submitResults({ byteBracket, address }) {
     byteBracket = "0x" + byteBracket;
-    return new Promise((resolve, reject) => {
-      this.marchMadness.submitResults(byteBracket, { from: address }, (err) => {
+    const submitResultsPromise = new Promise((resolve, reject) => {
+      this.marchMadness.submitResults(byteBracket, { from: address }, (err, txHash) => {
         if (err) return reject(err);
-
-        this.marchMadness.results((err, results) => {
-          if (err) return reject(err);
-
-          if (byteBracket !== results) {
-            return reject(new Error("Results were not accepted for unknown reason"));
-          }
-
-          resolve();
-        });
+        resolve(txHash);
       });
     });
+    return submitResultsPromise
+      .then((txHash) => waitForConfirmation(txHash))
+      .then(() => this.fetchContractState('results'))
+      .then((results) => {
+        if (byteBracket !== results) {
+          return reject(new Error("Results were not accepted for unknown reason"));
+        }
+      });
   }
 
   revealBracket({ byteBracket, salt, address }) {

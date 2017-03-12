@@ -19,13 +19,13 @@ const Team = observer(function Team({team, gameNumber, bracket, results, editabl
   }
 
   const actualWinner = results && results.winners[gameNumber];
-  const selected = bracket.winners[gameNumber] === team.number;
+  const selected = team && bracket.winners[gameNumber] === team.number;
   const classes = classNames({
     team: true,
     selectable: editable,
     selected: selected,
-    correct: selected && _.isNumber(actualWinner) && actualWinner === team.number,
-    incorrect: selected && _.isNumber(actualWinner) && actualWinner !== team.number
+    correct: selected && actualWinner === team.number,
+    incorrect: selected && actualWinner != null && actualWinner !== team.number
   });
   return (
     <div className={classes} onClick={clickHandler}>
@@ -103,8 +103,8 @@ export default function Bracket({bracket, results, children, editable}) {
     <div className="bracket">
       {children}
       <div className="clearfix">
-        <Region bracket={bracket} results={results} editable={editable} details={tournament.regionDetails(0)}/>
-        <Region bracket={bracket} results={results} editable={editable} details={tournament.regionDetails(2)}/>
+        <Region bracket={bracket} results={results} editable={editable} details={tournament.regions[0]}/>
+        <Region bracket={bracket} results={results} editable={editable} details={tournament.regions[2]}/>
       </div>
       <div className="final-rounds">
         <Game number={60} bracket={bracket} results={results} editable={editable}/>
@@ -112,8 +112,8 @@ export default function Bracket({bracket, results, children, editable}) {
         <Game number={62} bracket={bracket} results={results} editable={editable}/>
       </div>
       <div className="clearfix">
-        <Region bracket={bracket} results={results} editable={editable} details={tournament.regionDetails(1)}/>
-        <Region bracket={bracket} results={results} editable={editable} details={tournament.regionDetails(3)}/>
+        <Region bracket={bracket} results={results} editable={editable} details={tournament.regions[1]}/>
+        <Region bracket={bracket} results={results} editable={editable} details={tournament.regions[3]}/>
       </div>
     </div>
   );

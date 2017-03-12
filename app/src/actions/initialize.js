@@ -2,23 +2,23 @@ import {action} from 'mobx';
 
 import * as ipfs from '../ipfs';
 import {applicationStore, bracketStore, contractStore, tournamentStore} from '../stores';
-import {dateToTimestamp} from '../util';
+import {dateToTimestamp, waitForCondition} from '../util';
 import MarchMadnessWrapper from '../MarchMadnessWrapper';
 import OracleWrapper from '../OracleWrapper';
-import web3 from '../web3';
+import {web3} from '../web3';
 import {bracketAddressChanged} from './common';
 
 const marchMadness = new MarchMadnessWrapper();
 const oracle = new OracleWrapper();
 
 export function initialize() {
-  return waitForConnections()
+  return waitForCondition(checkConnections)
     .then(initializeContract)
     .then(initializeTournament)
     .then(initializeBracket)
     .then(initializeOracle)
     .catch((error) => {
-      applicationStore.error = error;
+      applicationStore.alertError(error);
       console.error(error);
     });
 }
@@ -30,7 +30,7 @@ function checkConnections() {
     .then(() => {
       let ethereumError = null;
       if (!web3.isConnected()) {
-        ethereumError = new Error("See below for instructions on connecting to the Ethereum network");
+        ethereumError = "See below for instructions on connecting to the Ethereum network";
       }
       else if (web3.version.network !== marchMadness.network) {
         ethereumError = new Error("The Ethereum node is connected to the wrong network");
@@ -44,28 +44,14 @@ function checkConnections() {
         .then((isAvailable) => {
           applicationStore.ipfsNodeConnected = isAvailable;
           if (!isAvailable) {
-            error = error || new Error("See below for instructions on running an IPFS node");
+            error = error || "See below for instructions on running an IPFS node";
           }
         });
     })
-    .then(() => applicationStore.error = error);
-}
-
-function waitForConnections() {
-  return new Promise((resolve) => {
-    let intervalId;
-    const repeatedCheck = () => {
-      checkConnections()
-        .then(() => {
-          if (applicationStore.ethereumNodeConnected && applicationStore.ipfsNodeConnected) {
-            clearInterval(intervalId);
-            resolve();
-          }
-        });
-    };
-    intervalId = setInterval(repeatedCheck, 1000);
-    repeatedCheck();
-  });
+    .then(() => {
+      applicationStore.alert('warning', error);
+      return !error;
+    });
 }
 
 function initializeBracket() {
@@ -101,8 +87,8 @@ function initializeTournament() {
     .then((content) => JSON.parse(content))
     .then(action(({name, teams, regions}) => {
       tournamentStore.name = name;
-      tournamentStore.teams = teams;
-      tournamentStore.regions = regions;
+      tournamentStore.setTeams(teams);
+      tournamentStore.setRegions(regions);
 
       if (contractStore.resultsSubmitted) {
         bracketStore.results.loadByteBracket(contractStore.results.slice(2));
@@ -111,19 +97,17 @@ function initializeTournament() {
 }
 
 function startCountdown(timeField, countdownField) {
-  let intervalId;
-  const updateCountdown = () => {
+  return waitForCondition(() => {
     const now = dateToTimestamp(new Date());
     if (now > contractStore[timeField]) {
       contractStore[countdownField] = 0;
-      clearInterval(intervalId);
+      return Promise.resolve(true);
     }
     else {
       contractStore[countdownField] = contractStore[timeField] - now;
+      return Promise.resolve(false);
     }
-  };
-  intervalId = setInterval(updateCountdown, 5000);
-  updateCountdown();
+  });
 }
 
 function initializeContract() {
