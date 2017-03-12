@@ -105,7 +105,8 @@ const Requirements  = observer(function Requirements({application}) {
 
   renderEnterResultsButton() {
     const {bracket, contract} = this.props;
-    if (contract.creator === bracket.address &&
+    if (contract.oracleIsVoter &&
+        !contract.oracleHasVoted &&
         contract.tournamentStarted &&
         !bracket.results.complete) {
       return (

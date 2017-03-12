@@ -4,10 +4,12 @@ import {action} from 'mobx';
 
 import {applicationStore, bracketStore, contractStore, tournamentStore} from '../stores';
 import MarchMadnessWrapper from '../MarchMadnessWrapper';
+import OracleWrapper from '../OracleWrapper';
 import {bracketAddressChanged} from './common';
 import {waitForConfirmation} from '../web3';
 
 const marchMadness = new MarchMadnessWrapper();
+const oracle = new OracleWrapper();
 
 export function createBracket() {
   applicationStore.screen = 'CreateBracketScreen';
@@ -18,11 +20,11 @@ export function loadBracket() {
   if (!bracketStore.picks.complete) {
     applicationStore.screen = 'LoadBracketScreen';
   }
-  else if (!contractStore.commitments.get(bracketStore.address)) {
-    applicationStore.screen = 'BracketScreen';
+  else if (contractStore.commitments.get(bracketStore.address) === contractStore.NO_COMMITMENT) {
+    applicationStore.screen = 'CreateBracketScreen';
   }
   else {
-    applicationStore.screen = 'CreateBracketScreen';
+    applicationStore.screen = 'BracketScreen';
   }
 }
 
@@ -37,14 +39,17 @@ export function submitResults() {
     byteBracket: bracketStore.results.toByteBracket(),
     address: bracketStore.address
   };
-  marchMadness.submitResults(options)
-    .then(() => marchMadness.getBracketScore(bracketStore.picks.toByteBracket()))
-    .then(action((score) => {
-      bracketStore.score = score;
-      contractStore.results = options.byteBracket;
-      applicationStore.alert('success', "Your submission has been accepted");
-      applicationStore.screen = 'StartScreen';
-    }))
+  oracle.submitResults(options)
+    .then(() => oracle.getFinalValue())
+    .then((value) => {
+      if (value === '0x0000000000000000') {
+        applicationStore.alert('success', "Your vote on the results has been submitted");
+      }
+      else {
+        contractStore.results = options.byteBracket;
+        return startScoringPhase();
+      }
+    })
     .catch((err) => applicationStore.alertError(err));
 }
 
@@ -92,7 +97,6 @@ export function revealBracket() {
     address: bracketStore.address
   };
   marchMadness.revealBracket(options)
-    .then(() => marchMadness.scoreBracket(options.address))
     .then((score) => contractStore.scores.set(bracketStore.address, score))
     .catch((err) => applicationStore.alertError(err));
 }
@@ -101,4 +105,21 @@ export function collectWinnings() {
   marchMadness.collectWinnings(bracketStore.address)
     .then(() => contractStore.collectedWinnings.set(bracketStore.address, true))
     .catch((err) => applicationStore.alertError(err));
+}
+
+function startScoringPhase() {
+  return marchMadness.startScoring({address: contractStore.account})
+    .then(() => {
+      if (bracketStore.picks.complete) {
+        return marchMadness.getBracketScore(bracketStore.picks.toByteBracket())
+          .then((score) => bracketStore.score = score);
+      }
+    })
+    .then(action(() => {
+      applicationStore.alert(
+        'success',
+        "The results are in and the scoring period has begun"
+      );
+      applicationStore.screen = 'StartScreen';
+    }));
 }

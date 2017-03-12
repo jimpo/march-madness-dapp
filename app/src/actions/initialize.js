@@ -32,7 +32,7 @@ function checkConnections() {
       if (!web3.isConnected()) {
         ethereumError = "See below for instructions on connecting to the Ethereum network";
       }
-      else if (web3.version.network !== marchMadness.network) {
+      else if (web3.version.network !== marchMadness.networkID) {
         ethereumError = new Error("The Ethereum node is connected to the wrong network");
       }
 
@@ -146,6 +146,6 @@ function initializeOracle() {
   return oracle.voterStatus(contractStore.account)
     .then(action(([isVoter, hasVoted]) => {
       contractStore.oracleIsVoter = isVoter;
-      contractStore.oracleHasVoter = hasVoted;
+      contractStore.oracleHasVoted = hasVoted;
     }));
 }

@@ -13,9 +13,9 @@ module.exports = function(deployer) {
     .then(() => {
       return deployer.deploy(
         MarchMadness,
-        1000000000000000, // entryFee
-        dateToTimestamp(new Date()) + 24 * 60 * 60, // tournamentStartTime
-        24 * 60 * 60, // scoringDuration
+        500000000000000000, // entryFee
+        dateToTimestamp(new Date()) + 5 * 60, // tournamentStartTime
+        3 * 60, // scoringDuration
         "QmfAA8123Kvh3cCPw6UJvDeTeU6JKMsk8K9aBkZz2w25qj", // tournamentDataIPFSHash
         FederatedOracleBytes8.address // oracleAddress
       );

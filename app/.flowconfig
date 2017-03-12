@@ -5,6 +5,7 @@
 [libs]
 
 [options]
-module.name_mapper='.*\.less' -> '<PROJECT_ROOT>/flow/less-stub.js'
+module.name_mapper='build/contracts/.*' -> '<PROJECT_ROOT>/flow/contract-stub.js'
+module.name_mapper.extension='less' -> '<PROJECT_ROOT>/flow/less-stub.js'
 unsafe.enable_getters_and_setters=true
 esproposal.decorators=ignore
