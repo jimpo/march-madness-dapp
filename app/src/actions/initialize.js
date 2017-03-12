@@ -8,7 +8,7 @@ import {applicationStore, bracketStore, contractStore, tournamentStore} from '..
 import {dateToTimestamp, waitForCondition} from '../util';
 import MarchMadnessWrapper from '../MarchMadnessWrapper';
 import OracleWrapper from '../OracleWrapper';
-import {web3} from '../web3';
+import {web3, resetWeb3Provider} from '../web3';
 import {bracketAddressChanged, updateTotalSubmissions} from './common';
 
 const marchMadness = new MarchMadnessWrapper();
@@ -31,12 +31,14 @@ function checkConnections(): Promise<boolean> {
 
   return Promise.resolve()
     .then(() => {
+      resetWeb3Provider();
+
       let ethereumError = null;
       if (!web3.isConnected()) {
         ethereumError = "See below for instructions on connecting to the Ethereum network";
       }
       else if (web3.version.network !== marchMadness.networkID) {
-        ethereumError = new Error("The Ethereum node is connected to the wrong network");
+        ethereumError = "The Ethereum node is connected to the wrong network";
       }
 
       applicationStore.ethereumNodeConnected = !ethereumError;
@@ -54,7 +56,8 @@ function checkConnections(): Promise<boolean> {
     .then(() => {
       applicationStore.alert('warning', error);
       return !error;
-    });
+    })
+    .catch((err) => console.error(err));
 }
 
 function initializeBracket(): Promise<void> {

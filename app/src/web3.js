@@ -5,16 +5,17 @@ import Web3 from 'web3';
 import {waitForCondition} from './util';
 
 
-function createWeb3(): Web3 {
-  if (typeof web3 !== 'undefined') {
-    return new Web3(web3.currentProvider);
+export const web3 = new Web3();
+
+export function resetWeb3Provider() {
+  if (window.web3) {
+    web3.setProvider(window.web3.currentProvider);
   }
   else {
-    return new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+    web3.setProvider(new Web3.providers.HttpProvider("http://localhost:8545"));
   }
+  console.log(web3.currentProvider);
 }
-
-export const web3 = createWeb3();
 
 export function waitForConfirmation(txHash: string): Promise<void> {
   return waitForCondition(() => {
