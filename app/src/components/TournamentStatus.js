@@ -67,43 +67,51 @@ class TournamentStatus extends React.Component {
     );
   }
 
-  // TODO: Show size of pool, # of entrants
+  renderTotalSubmissions() {
+    const {contract} = this.props;
+    return (
+      <div>
+        <strong>Total Submissions:</strong>{' '}{contract.totalSubmissions}
+      </div>
+    );
+  }
+
   render() {
     const {bracket, contract} = this.props;
     if (contract.contestOver) {
+      let description;
+      if (contract.scores.get(bracket.address) &&
+          contract.scores.get(bracket.address).equals(contract.winningScore)) {
+        description = "Congratulations, you won!";
+      }
+      else {
+        description = "The contest is now over. Better luck next time.";
+      }
+
       return (
         <div className="well">
-          <div>
-            <strong>Status:</strong>
-            {' '}
-            Contest Over
-          </div>
+          <p>{description}</p>
           {this.renderBracketScores()}
+          {this.renderTotalSubmissions()}
         </div>
       );
     }
     else if (contract.resultsSubmitted) {
       return (
         <div className="well">
-          <div>
-            <strong>Status:</strong>
-            {' '}
-            Scoring period
-          </div>
+          <p>The scoring period has begun. During the scoring period, you may publicly reveal and score your bracket for a chance to win.</p>
           {this.renderContestCountdown()}
           {this.renderBracketScores()}
+          {this.renderTotalSubmissions()}
         </div>
       );
     }
     else if (contract.tournamentStarted) {
       return (
         <div className="well">
-          <div>
-            <strong>Status:</strong>
-            {' '}
-            Tournament is in progress
-          </div>
+          <p>The tournament is in progress. When the tournament is over, the results will be submitted and the scoring phase will begin.</p>
           {this.renderScoringDuration()}
+          {this.renderTotalSubmissions()}
         </div>
       );
     }
@@ -113,6 +121,7 @@ class TournamentStatus extends React.Component {
           {this.renderTournamentStartCountdown()}
           {this.renderScoringDuration()}
           {this.renderEntryFee()}
+          {this.renderTotalSubmissions()}
         </div>
       );
     }

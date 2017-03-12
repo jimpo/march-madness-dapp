@@ -1,3 +1,6 @@
+// @flow
+
+import BigNumber from 'bignumber';
 import {action} from 'mobx';
 
 import * as ipfs from '../ipfs';
@@ -6,13 +9,13 @@ import {dateToTimestamp, waitForCondition} from '../util';
 import MarchMadnessWrapper from '../MarchMadnessWrapper';
 import OracleWrapper from '../OracleWrapper';
 import {web3} from '../web3';
-import {bracketAddressChanged} from './common';
+import {bracketAddressChanged, updateTotalSubmissions} from './common';
 
 const marchMadness = new MarchMadnessWrapper();
 const oracle = new OracleWrapper();
 
 export function initialize() {
-  return waitForCondition(checkConnections)
+  waitForCondition(checkConnections)
     .then(initializeContract)
     .then(initializeTournament)
     .then(initializeBracket)
@@ -23,7 +26,7 @@ export function initialize() {
     });
 }
 
-function checkConnections() {
+function checkConnections(): Promise<boolean> {
   let error = null;
 
   return Promise.resolve()
@@ -54,7 +57,7 @@ function checkConnections() {
     });
 }
 
-function initializeBracket() {
+function initializeBracket(): Promise<void> {
   if (localStorage.submissionKey) {
     try {
       bracketStore.deserialize(localStorage.submissionKey);
@@ -82,7 +85,7 @@ function initializeBracket() {
     });
 }
 
-function initializeTournament() {
+function initializeTournament(): Promise<void> {
   return ipfs.getPath(contractStore.tournamentDataIPFSHash)
     .then((content) => JSON.parse(content))
     .then(action(({name, teams, regions}) => {
@@ -96,7 +99,7 @@ function initializeTournament() {
     }));
 }
 
-function startCountdown(timeField, countdownField) {
+function startCountdown(timeField, countdownField): Promise<void> {
   return waitForCondition(() => {
     const now = dateToTimestamp(new Date());
     if (now > contractStore[timeField]) {
@@ -110,7 +113,7 @@ function startCountdown(timeField, countdownField) {
   });
 }
 
-function initializeContract() {
+function initializeContract(): Promise<void> {
   contractStore.account = web3.eth.defaultAccount || web3.eth.accounts[0];
   if (!contractStore.account) {
     throw Error("Cannot find default Ethereum account");
@@ -139,13 +142,41 @@ function initializeContract() {
       if (!contractStore.contestOverTime.isZero()) {
         startCountdown('contestOverTime', 'timeToContestOver');
       }
+
+      watchTotalSubmissions();
+      watchWinningScore();
     });
 }
 
-function initializeOracle() {
+function initializeOracle(): Promise<void> {
   return oracle.voterStatus(contractStore.account)
     .then(action(([isVoter, hasVoted]) => {
       contractStore.oracleIsVoter = isVoter;
       contractStore.oracleHasVoted = hasVoted;
     }));
+}
+
+function watchTotalSubmissions() {
+  contractStore.totalSubmissions = 0;
+  marchMadness.marchMadness.SubmissionAccepted({}, {fromBlock: 0, toBlock: 'latest'}, (err, log) => {
+    if (err) {
+      console.error(err);
+    }
+    else {
+      console.log(log);
+      contractStore.totalSubmissions++;
+    }
+  });
+}
+
+function watchWinningScore() {
+  contractStore.winningScore = new BigNumber(0);
+  marchMadness.marchMadness.NewWinner({}, {fromBlock: 0, toBlock: 'latest'}, (err, log) => {
+    if (err) {
+      console.error(err);
+    }
+    else {
+      contractStore.totalSubmissions++;
+    }
+  });
 }

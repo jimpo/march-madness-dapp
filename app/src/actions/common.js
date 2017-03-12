@@ -1,3 +1,5 @@
+// @flow
+
 // TODO: Refactor this file away
 
 import {bracketStore, contractStore} from '../stores';
@@ -5,7 +7,7 @@ import MarchMadnessWrapper from '../MarchMadnessWrapper';
 
 const marchMadness = new MarchMadnessWrapper();
 
-export function bracketAddressChanged() {
+export function bracketAddressChanged(): Promise<void> {
   const address = bracketStore.address;
   return marchMadness.hasCollectedWinnings(address)
     .then((result) => contractStore.collectedWinnings.set(address, result))
@@ -13,12 +15,12 @@ export function bracketAddressChanged() {
     .then((commitment) => contractStore.commitments.set(address, commitment))
     .then(() => {
       if (bracketStore.picks.complete && bracketStore.results.complete) {
-        scoreBracket();
+        return scoreBracket();
       }
     });
 }
 
-function scoreBracket() {
+function scoreBracket(): Promise<void> {
   return marchMadness.fetchScore(bracketStore.address)
     .then((score) => {
       if (score.isZero()) {

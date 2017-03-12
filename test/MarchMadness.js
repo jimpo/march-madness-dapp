@@ -8,9 +8,10 @@ contract('MarchMadness', (accounts) => {
 
   const defaultEntryFee = 100000000000;
   const defaultTournamentStartTime = () => dateToTimestamp(new Date()) + 10;
+  const defaultNoContestTime = () => dateToTimestamp(new Date()) + 100;
   const defaultScoringDuration = 60 * 60 * 24;
 
-  let entryFee, tournamentStartTime, scoringDuration;
+  let entryFee, tournamentStartTime, noContestTime, scoringDuration;
   resetDefaultContractParameters();
 
   const results = "0x8000000000000000";
@@ -28,6 +29,7 @@ contract('MarchMadness', (accounts) => {
     return MarchMadness.new(
       entryFee,
       tournamentStartTime(),
+      noContestTime(),
       scoringDuration,
       "IPFS_HASH",
       federatedOracle.address
@@ -337,6 +339,54 @@ contract('MarchMadness', (accounts) => {
     });
   });
 
+  describe("#collectEntryFee", () => {
+    const commitment = crypto.randomBytes(32).toString('hex');
+    const address = accounts[0];
+
+    before(() => {
+      tournamentStartTime = () => dateToTimestamp(new Date()) + 1;
+      noContestTime = () => dateToTimestamp(new Date()) + 2;
+    });
+
+    beforeEach(() => {
+      return marchMadness.submitBracket(commitment, { from: address, value: entryFee })
+        .then(() => waitForSeconds(1)); // Wait for tournament to start
+    });
+
+    it("does not allow entrants to collect fees before the no contest time", () => {
+      const initialBalance = web3.eth.getBalance(address);
+      return marchMadness.collectEntryFee({ from: address, gasPrice: 0 })
+        .then(() => {
+          assert.equal(web3.eth.getBalance(address).toString(), initialBalance.toString());
+        });
+    });
+
+    it("does not allow entrants to collect fees if the results were submitted", () => {
+      return marchMadness.startScoring()
+        .then(() => waitForSeconds(1))
+        .then(() => {
+          const initialBalance = web3.eth.getBalance(address);
+          return marchMadness.collectEntryFee({ from: address, gasPrice: 0 })
+            .then(() => {
+              assert.equal(web3.eth.getBalance(address).toString(), initialBalance.toString());
+            });
+        });
+    });
+
+    it("allows entrants to reclaim their entry fees once after the no contest time", () => {
+      const initialBalance = web3.eth.getBalance(address);
+      return waitForSeconds(1)
+        .then(() => marchMadness.collectEntryFee({ from: address, gasPrice: 0 }))
+        .then(() => marchMadness.collectEntryFee({ from: address, gasPrice: 0 }))
+        .then(() => {
+          assert.equal(
+            web3.eth.getBalance(address).toString(),
+            initialBalance.plus(entryFee).toString()
+          );
+        });
+    });
+  });
+
   function dateToTimestamp(date) {
     return Math.floor(date.getTime() / 1000);
   }
@@ -344,6 +394,7 @@ contract('MarchMadness', (accounts) => {
   function resetDefaultContractParameters() {
     entryFee = defaultEntryFee;
     tournamentStartTime = defaultTournamentStartTime;
+    noContestTime = defaultNoContestTime;
     scoringDuration = defaultScoringDuration;
   }
 

@@ -1,34 +1,39 @@
+// @flow
+
 import {action, observable, computed} from 'mobx';
+import type BigNumber from 'bignumber';
 
 
 export default class ContractStore {
   NO_COMMITMENT = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
-  @observable account;
-  @observable oracleIsVoter;
-  @observable oracleHasVoted;
+  @observable account: string;
+  @observable oracleIsVoter: boolean;
+  @observable oracleHasVoted: boolean;
 
-  @observable entryFee;
-  @observable scoringDuration;
-  @observable tournamentDataIPFSHash;
-  @observable tournamentStartTime;
-  @observable contestOverTime;
-  @observable timeToTournamentStart;
-  @observable timeToContestOver;
-  @observable winningScore;
-  @observable commitments = new Map();
-  @observable scores = new Map();
-  @observable collectedWinnings = new Map();
+  @observable entryFee: BigNumber;
+  @observable scoringDuration: BigNumber;
+  @observable tournamentDataIPFSHash: string;
+  @observable tournamentStartTime: BigNumber;
+  @observable contestOverTime: BigNumber;
+  @observable timeToTournamentStart: BigNumber;
+  @observable timeToContestOver: BigNumber;
+  @observable winningScore: BigNumber;
+  @observable totalSubmissions: BigNumber;
+  @observable results: string;
+  @observable commitments: Map<string, string> = new Map();
+  @observable scores: Map<string, BigNumber> = new Map();
+  @observable collectedWinnings: Map<string, boolean> = new Map();
 
-  @computed get tournamentStarted() {
+  @computed get tournamentStarted(): boolean {
     return this.timeToTournamentStart === 0;
   }
 
-  @computed get contestOver() {
+  @computed get contestOver(): boolean {
     return this.timeToContestOver === 0;
   }
 
-  @computed get resultsSubmitted() {
-    return this.results && this.results !== "0x0000000000000000";
+  @computed get resultsSubmitted(): boolean {
+    return this.results != null && this.results !== "0x0000000000000000";
   }
 }

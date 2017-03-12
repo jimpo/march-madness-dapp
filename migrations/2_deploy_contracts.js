@@ -15,6 +15,7 @@ module.exports = function(deployer) {
         MarchMadness,
         500000000000000000, // entryFee
         dateToTimestamp(new Date()) + 5 * 60, // tournamentStartTime
+        dateToTimestamp(new Date()) + 60 * 60, // tournamentStartTime
         3 * 60, // scoringDuration
         "QmfAA8123Kvh3cCPw6UJvDeTeU6JKMsk8K9aBkZz2w25qj", // tournamentDataIPFSHash
         FederatedOracleBytes8.address // oracleAddress

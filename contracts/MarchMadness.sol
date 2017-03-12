@@ -14,6 +14,9 @@ import "./FederatedOracleBytes8.sol";
  * the scoring period, entrants may reveal their bracket picks and score their brackets. The highest
  * scoring bracket revealed is recorded. After the scoring period ends, all entrants with a highest
  * scoring bracket split the pot and may withdraw their winnings.
+ *
+ * In the event that the oracles do not submit results or fail to reach consensus after a certain
+ * amount of time, entry fees will be returned to entrants.
  */
 contract MarchMadness {
     struct Submission {
@@ -21,6 +24,7 @@ contract MarchMadness {
         bytes8 bracket;
         uint8 score;
         bool collectedWinnings;
+        bool collectedEntryFee;
     }
 
     event SubmissionAccepted(address account);
@@ -49,6 +53,10 @@ contract MarchMadness {
     // Timestamp of the start of the tournament phase
     uint public tournamentStartTime;
 
+    // In case the oracles fail to submit the results or reach consensus, the amount of time after
+    // the tournament has started after which to return entry fees to users.
+    uint public noContestTime;
+
     // Timestamp of the end of the scoring phase
     uint public contestOverTime;
 
@@ -64,6 +72,7 @@ contract MarchMadness {
 	function MarchMadness(
         uint entryFee_,
         uint tournamentStartTime_,
+        uint noContestTime_,
         uint scoringDuration_,
         string tournamentDataIPFSHash_,
         address oracleAddress
@@ -71,6 +80,7 @@ contract MarchMadness {
 		entryFee = entryFee_;
         tournamentStartTime = tournamentStartTime_;
         scoringDuration = scoringDuration_;
+        noContestTime = noContestTime_;
         tournamentDataIPFSHash = tournamentDataIPFSHash_;
         resultsOracle = FederatedOracleBytes8(oracleAddress);
 	}
@@ -97,6 +107,9 @@ contract MarchMadness {
             return false;
         }
         if (now < tournamentStartTime) {
+            return false;
+        }
+        if (now > noContestTime) {
             return false;
         }
 
@@ -169,6 +182,31 @@ contract MarchMadness {
         submission.collectedWinnings = true;
 
         if (!msg.sender.send(winnings)) {
+            throw;
+        }
+
+        return true;
+    }
+
+    function collectEntryFee() returns (bool) {
+        if (now < noContestTime) {
+            return false;
+        }
+        if (results != 0) {
+            return false;
+        }
+
+        var submission = submissions[msg.sender];
+        if (submission.commitment == 0) {
+            return false;
+        }
+        if (submission.collectedEntryFee) {
+            return false;
+        }
+
+        submission.collectedEntryFee = true;
+
+        if (!msg.sender.send(entryFee)) {
             throw;
         }
 
