@@ -3,7 +3,7 @@ import {observer} from 'mobx-react';
 import React from 'react';
 import _ from 'underscore';
 
-import {regionalGamesInRound} from '../../util';
+import {regionalGamesInRound} from '../../util/tournament';
 import _css from './style.less';
 import Lines from './Lines';
 
