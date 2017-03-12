@@ -19,7 +19,7 @@ export default class ContractStore {
   @observable timeToTournamentStart: BigNumber;
   @observable timeToContestOver: BigNumber;
   @observable winningScore: BigNumber;
-  @observable totalSubmissions: BigNumber;
+  @observable totalSubmissions: number;
   @observable results: string;
   @observable commitments: Map<string, string> = new Map();
   @observable scores: Map<string, BigNumber> = new Map();

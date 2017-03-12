@@ -2,6 +2,7 @@
 
 // TODO: Refactor this file away
 
+import {web3} from '../web3';
 import {bracketStore, contractStore} from '../stores';
 import MarchMadnessWrapper from '../MarchMadnessWrapper';
 
@@ -17,6 +18,21 @@ export function bracketAddressChanged(): Promise<void> {
       if (bracketStore.picks.complete && bracketStore.results.complete) {
         return scoreBracket();
       }
+    });
+}
+
+export function updateTotalSubmissions(): Promise<void> {
+  const getContractBalance = () => {
+    return new Promise((resolve, reject) => {
+      web3.eth.getBalance(marchMadness.address, (err, balance) => {
+        if (err) return reject(err);
+        resolve(balance);
+      });
+    });
+  };
+  return getContractBalance()
+    .then((balance) => {
+      contractStore.totalSubmissions = balance.div(contractStore.entryFee).toNumber();
     });
 }
 

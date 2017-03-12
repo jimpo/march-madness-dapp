@@ -69,7 +69,7 @@ export function submissionKeyEntered(key: string) {
   localStorage.setItem('submissionKey', key);
 
   bracketAddressChanged()
-    .then(() => this.loadBracket())
+    .then(loadBracket)
     .catch((err) => applicationStore.alertError(err));
 }
 

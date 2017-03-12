@@ -145,7 +145,8 @@ function initializeContract(): Promise<void> {
 
       watchTotalSubmissions();
       watchWinningScore();
-    });
+    })
+    .then(updateTotalSubmissions);
 }
 
 function initializeOracle(): Promise<void> {
@@ -157,26 +158,24 @@ function initializeOracle(): Promise<void> {
 }
 
 function watchTotalSubmissions() {
-  contractStore.totalSubmissions = 0;
-  marchMadness.marchMadness.SubmissionAccepted({}, {fromBlock: 0, toBlock: 'latest'}, (err, log) => {
+  marchMadness.marchMadness.SubmissionAccepted((err, log) => {
     if (err) {
       console.error(err);
     }
     else {
-      console.log(log);
-      contractStore.totalSubmissions++;
+      updateTotalSubmissions();
     }
   });
 }
 
 function watchWinningScore() {
-  contractStore.winningScore = new BigNumber(0);
   marchMadness.marchMadness.NewWinner({}, {fromBlock: 0, toBlock: 'latest'}, (err, log) => {
     if (err) {
       console.error(err);
     }
     else {
-      contractStore.totalSubmissions++;
+      marchMadness.fetchContractState('winningScore')
+        .then((winningScore) => contractStore.winningScore = winningScore);
     }
   });
 }
