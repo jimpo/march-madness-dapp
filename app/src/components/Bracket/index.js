@@ -3,7 +3,7 @@ import {observer} from 'mobx-react';
 import React from 'react';
 import _ from 'underscore';
 
-import * as util from '../../util';
+import {regionalGamesInRound} from '../../util';
 import _css from './style.less';
 import Lines from './Lines';
 
@@ -49,7 +49,7 @@ const Game = observer(function Game({number, bracket, results, editable}) {
 });
 
 function Round({number, regionNumber, bracket, results, editable}) {
-  const gameNumbers = util.regionalGamesInRound(regionNumber, number);
+  const gameNumbers = regionalGamesInRound(regionNumber, number);
   const gameComponents = gameNumbers.map((gameNumber) => {
     return (
       <Game

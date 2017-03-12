@@ -1,7 +1,9 @@
+// @flow
+
 import {observer} from 'mobx-react';
 import React from 'react';
 
-import {createBracket, enterResults, loadBracket} from '../actions/startup';
+import {createBracket, enterResults, loadBracket} from '../actions';
 
 
 const Requirements  = observer(function Requirements({application}) {

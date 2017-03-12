@@ -1,7 +1,9 @@
+// @flow
+
 import {observer} from 'mobx-react';
 import React from 'react';
 
-import {submissionKeyEntered} from '../actions/startup';
+import {submissionKeyEntered} from '../actions';
 
 
 const LoadBracketScreen = observer(function LoadBracketScreen({bracket}) {

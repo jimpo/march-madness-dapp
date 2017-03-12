@@ -1,9 +1,11 @@
+// @flow
+
 import {observer} from 'mobx-react';
 import React from 'react';
 
 import Bracket from './Bracket';
 import TournamentStatus from './TournamentStatus';
-import {doneCreatingBracket} from '../actions/startup';
+import {doneCreatingBracket} from '../actions';
 
 
 const CreateBracketScreen = observer(function CreateBracketScreen({bracket, contract}) {

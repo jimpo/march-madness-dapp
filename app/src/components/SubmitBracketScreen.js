@@ -1,7 +1,9 @@
+// @flow
+
 import {observer} from 'mobx-react';
 import React from 'react';
 
-import {submitBracket} from '../actions/startup';
+import {submitBracket} from '../actions';
 
 
 const SubmitBracketScreen = observer(function SubmitBracketScreen({bracket}) {

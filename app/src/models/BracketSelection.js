@@ -3,7 +3,8 @@
 import {action, observable, computed} from 'mobx';
 import _ from 'underscore';
 
-import * as util from '../util';
+import {bitstringToBuffer, bufferToBitstring} from '../util';
+import * as tournamentUtil from '../util/tournament';
 import type Team from '../models/Team';
 import type TournamentStore from '../stores/TournamentStore';
 
@@ -23,24 +24,24 @@ export default class BracketSelection {
   }
 
   team1InGame(gameNumber: number): ?Team {
-    const round = util.roundOfGame(gameNumber);
+    const round = tournamentUtil.roundOfGame(gameNumber);
     if (round === 0) {
       return this.tournament.teams[2 * gameNumber];
     }
     else {
-      const previousGames = util.previousGames(gameNumber);
+      const previousGames = tournamentUtil.previousGames(gameNumber);
       const teamNumber = this.winners[previousGames[0]];
       return teamNumber == null ? null : this.tournament.teams[teamNumber];
     }
   }
 
   team2InGame(gameNumber: number): ?Team {
-    const round = util.roundOfGame(gameNumber);
+    const round = tournamentUtil.roundOfGame(gameNumber);
     if (round === 0) {
       return this.tournament.teams[2 * gameNumber + 1];
     }
     else {
-      const previousGames = util.previousGames(gameNumber);
+      const previousGames = tournamentUtil.previousGames(gameNumber);
       const teamNumber = this.winners[previousGames[1]];
       return teamNumber == null ? null : this.tournament.teams[teamNumber];
     }
@@ -57,7 +58,7 @@ export default class BracketSelection {
 
     if (oldWinner !== teamNumber && oldWinner !== undefined) {
       while (gameNumber < 62) {
-        gameNumber = util.nextGame(gameNumber);
+        gameNumber = tournamentUtil.nextGame(gameNumber);
         if (this.winners[gameNumber] !== oldWinner) {
           break;
         }
@@ -76,12 +77,12 @@ export default class BracketSelection {
       }
       byteBracketStr += this.winners[i] == team.number ? '1' : '0';
     }
-    return util.bitstringToBuffer(byteBracketStr).toString('hex');
+    return bitstringToBuffer(byteBracketStr).toString('hex');
   }
 
   @action
   loadByteBracket(byteBracket: string): void {
-    let byteBracketStr = util.bufferToBitstring(new Buffer(byteBracket, 'hex'));
+    let byteBracketStr = bufferToBitstring(new Buffer(byteBracket, 'hex'));
     for (let i = 0; i < 63; i++) {
       if (byteBracketStr[63 - i] === '1') {
         const team: Team = this.team1InGame(i);
