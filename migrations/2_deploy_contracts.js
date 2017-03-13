@@ -7,17 +7,17 @@ function dateToTimestamp(date) {
 }
 
 module.exports = function(deployer) {
-  return deployer.deploy(FederatedOracleBytes8, 1, 1)
+  return deployer.deploy(FederatedOracleBytes8, 3, 4)
     .then(() => deployer.deploy(ByteBracket))
     .then(() => deployer.link(ByteBracket, MarchMadness))
     .then(() => {
       return deployer.deploy(
         MarchMadness,
-        1000000000000000, // entryFee
-        dateToTimestamp(new Date()) + 12 * 60 * 60, // tournamentStartTime
-        dateToTimestamp(new Date()) + 7 * 24 * 60 * 60, // noContestTime
-        6 * 60 * 60, // scoringDuration
-        "QmfAA8123Kvh3cCPw6UJvDeTeU6JKMsk8K9aBkZz2w25qj", // tournamentDataIPFSHash
+        500000000000000000, // entryFee
+        Math.floor(Date.UTC(2017, 2, 16, 16, 0, 0) / 1000), // tournamentStartTime
+        Math.floor(Date.UTC(2017, 3, 10, 0, 0, 0) / 1000), // noContestTime
+        3 * 24 * 60 * 60, // scoringDuration
+        "QmZ8KnqotVrWgAtjkzH9m5QNonXyxvQNihkzL5Rgqg4jYB", // tournamentDataIPFSHash
         FederatedOracleBytes8.address // oracleAddress
       );
     });
