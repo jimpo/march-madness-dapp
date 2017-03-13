@@ -20,6 +20,7 @@ export default class ContractStore {
   @observable timeToContestOver: BigNumber;
   @observable winningScore: BigNumber;
   @observable totalSubmissions: number;
+  @observable maxSubmissions: number;
   @observable results: string;
   @observable commitments: Map<string, string> = new Map();
   @observable scores: Map<string, BigNumber> = new Map();
@@ -35,5 +36,9 @@ export default class ContractStore {
 
   @computed get resultsSubmitted(): boolean {
     return this.results != null && this.results !== "0x0000000000000000";
+  }
+
+  @computed get atSubmissionLimit(): boolean {
+    return this.totalSubmissions >= this.maxSubmissions;
   }
 }

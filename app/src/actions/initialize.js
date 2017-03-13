@@ -80,7 +80,8 @@ function initializeBracket(): Promise<void> {
       const commitment = contractStore.commitments.get(bracketStore.address);
       if (commitment !== contractStore.NO_COMMITMENT && commitment !== bracketStore.commitment) {
         bracketStore.reset();
-        throw new Error(
+        applicationStore.alert(
+          'warning',
           "A bracket has already been entered for your Ethereum account. " +
             "Load the bracket using the submission key."
         );
@@ -129,7 +130,8 @@ function initializeContract(): Promise<void> {
     marchMadness.fetchContractState('tournamentDataIPFSHash'),
     marchMadness.fetchContractState('results'),
     marchMadness.fetchContractState('contestOverTime'),
-    marchMadness.fetchContractState('winningScore')
+    marchMadness.fetchContractState('winningScore'),
+    marchMadness.fetchContractState('maxSubmissions')
   ])
     .then(action((values) => {
       contractStore.entryFee = values[0];
@@ -139,6 +141,7 @@ function initializeContract(): Promise<void> {
       contractStore.results = values[4];
       contractStore.contestOverTime = values[5];
       contractStore.winningScore = values[6];
+      contractStore.maxSubmissions = values[7].toNumber();
     }))
     .then(() => {
       startCountdown('tournamentStartTime', 'timeToTournamentStart');
@@ -149,7 +152,15 @@ function initializeContract(): Promise<void> {
       watchTotalSubmissions();
       watchWinningScore();
     })
-    .then(updateTotalSubmissions);
+    .then(updateTotalSubmissions)
+    .then(() => {
+      if (contractStore.atSubmissionLimit) {
+        applicationStore.alert(
+          'warning',
+          "Unfortunately, the contract has hit the limit on the total number of submissions"
+        );
+      }
+    });
 }
 
 function initializeOracle(): Promise<void> {

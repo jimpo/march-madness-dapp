@@ -10,8 +10,9 @@ contract('MarchMadness', (accounts) => {
   const defaultTournamentStartTime = () => dateToTimestamp(new Date()) + 10;
   const defaultNoContestTime = () => dateToTimestamp(new Date()) + 100;
   const defaultScoringDuration = 60 * 60 * 24;
+  const defaultMaxSubmissions = 100;
 
-  let entryFee, tournamentStartTime, noContestTime, scoringDuration;
+  let entryFee, tournamentStartTime, noContestTime, scoringDuration, maxSubmissions;
   resetDefaultContractParameters();
 
   const results = "0x8000000000000000";
@@ -31,6 +32,7 @@ contract('MarchMadness', (accounts) => {
       tournamentStartTime(),
       noContestTime(),
       scoringDuration,
+      maxSubmissions,
       "IPFS_HASH",
       federatedOracle.address
     )
@@ -396,6 +398,7 @@ contract('MarchMadness', (accounts) => {
     tournamentStartTime = defaultTournamentStartTime;
     noContestTime = defaultNoContestTime;
     scoringDuration = defaultScoringDuration;
+    maxSubmissions = defaultMaxSubmissions;
   }
 
   function waitForSeconds(seconds) {

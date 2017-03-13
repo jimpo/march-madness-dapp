@@ -78,6 +78,7 @@ const Requirements  = observer(function Requirements({application}) {
   renderCreateBracketButton() {
     const {bracket, tournament, contract} = this.props;
     if (tournament.ready &&
+        !contract.atSubmissionLimit &&
         !contract.tournamentStarted &&
         contract.commitments.get(bracket.address) === contract.NO_COMMITMENT) {
       return (

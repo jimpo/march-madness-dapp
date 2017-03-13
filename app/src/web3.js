@@ -14,7 +14,6 @@ export function resetWeb3Provider() {
   else {
     web3.setProvider(new Web3.providers.HttpProvider("http://localhost:8545"));
   }
-  console.log(web3.currentProvider);
 }
 
 export function waitForConfirmation(txHash: string): Promise<void> {

@@ -13,10 +13,11 @@ module.exports = function(deployer) {
     .then(() => {
       return deployer.deploy(
         MarchMadness,
-        500000000000000000, // entryFee
+        250000000000000000, // entryFee
         Math.floor(Date.UTC(2017, 2, 16, 16, 0, 0) / 1000), // tournamentStartTime
         Math.floor(Date.UTC(2017, 3, 10, 0, 0, 0) / 1000), // noContestTime
         3 * 24 * 60 * 60, // scoringDuration
+        1, // maxSubmissions
         "QmZ8KnqotVrWgAtjkzH9m5QNonXyxvQNihkzL5Rgqg4jYB", // tournamentDataIPFSHash
         FederatedOracleBytes8.address // oracleAddress
       );

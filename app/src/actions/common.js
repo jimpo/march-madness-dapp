@@ -22,18 +22,8 @@ export function bracketAddressChanged(): Promise<void> {
 }
 
 export function updateTotalSubmissions(): Promise<void> {
-  const getContractBalance = () => {
-    return new Promise((resolve, reject) => {
-      web3.eth.getBalance(marchMadness.address, (err, balance) => {
-        if (err) return reject(err);
-        resolve(balance);
-      });
-    });
-  };
-  return getContractBalance()
-    .then((balance) => {
-      contractStore.totalSubmissions = balance.div(contractStore.entryFee).toNumber();
-    });
+  return marchMadness.fetchContractState('numSubmissions')
+    .then((count) => contractStore.totalSubmissions = count.toNumber());
 }
 
 function scoreBracket(): Promise<void> {

@@ -66,6 +66,12 @@ contract MarchMadness {
     // The highest score of a bracket scored so far
     uint8 public winningScore;
 
+    // The maximum allowed number of submissions
+    uint32 public maxSubmissions;
+
+    // The number of brackets submitted so far
+    uint32 public numSubmissions;
+
     // IPFS hash of JSON file containing tournament information (eg. teams, regions, etc)
     string public tournamentDataIPFSHash;
 
@@ -74,6 +80,7 @@ contract MarchMadness {
         uint tournamentStartTime_,
         uint noContestTime_,
         uint scoringDuration_,
+        uint32 maxSubmissions_,
         string tournamentDataIPFSHash_,
         address oracleAddress
     ) {
@@ -81,6 +88,7 @@ contract MarchMadness {
         tournamentStartTime = tournamentStartTime_;
         scoringDuration = scoringDuration_;
         noContestTime = noContestTime_;
+        maxSubmissions = maxSubmissions_;
         tournamentDataIPFSHash = tournamentDataIPFSHash_;
         resultsOracle = FederatedOracleBytes8(oracleAddress);
 	}
@@ -92,6 +100,9 @@ contract MarchMadness {
         if (now >= tournamentStartTime) {
             throw;
         }
+        if (numSubmissions >= maxSubmissions) {
+            throw;
+        }
 
         var submission = submissions[msg.sender];
         if (submission.commitment != 0) {
@@ -99,6 +110,7 @@ contract MarchMadness {
         }
 
         submission.commitment = commitment;
+        numSubmissions++;
         SubmissionAccepted(msg.sender);
     }
 
