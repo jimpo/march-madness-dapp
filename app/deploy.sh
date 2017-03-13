@@ -2,6 +2,10 @@
 
 set -e
 
+if [ ! -d node_modules ]; then
+  npm install
+fi
+
 node_modules/webpack/bin/webpack.js
 cd dist
 
