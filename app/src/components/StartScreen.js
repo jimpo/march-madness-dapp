@@ -70,7 +70,7 @@ const Requirements  = observer(function Requirements({application}) {
     return (
       <div>
         <p><strong>Scoring</strong></p>
-        <p>Brackets are scored according to the number of games where the winner is correctly predicted. Correct predictions score a different number of points depending on the round. Round 1 games score 1 point, round 2 games score 2 points, round 3 games score 4 points, round 4 games score 8 points, round 5 games score 16 points, and the final game scores 32 points. The are no tie-breakers.</p>
+        <p>Brackets are scored according to the number of games where the winner is correctly predicted. Correct predictions score a different number of points depending on the round. Round 1 games score 1 point, round 2 games score 2 points, round 3 games score 4 points, round 4 games score 8 points, round 5 games score 16 points, and the final game scores 32 points. There are no tie-breakers.</p>
       </div>
     );
   }
