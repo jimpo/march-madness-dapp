@@ -40,6 +40,7 @@ contract FederatedOracleBytes8 {
         var voter = voters[account];
         require(!voter.isVoter);
 
+        voter.isVoter = true;
         voter.identityIPFSHash = identityIPFSHash;
         voterCount++;
         VoterAdded(account);
