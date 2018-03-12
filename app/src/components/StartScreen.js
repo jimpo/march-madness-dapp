@@ -61,7 +61,8 @@ const Requirements  = observer(function Requirements({application}) {
       <div>
         <p><strong>Rules</strong></p>
         <p>Before the tournament starts, you may create a bracket and submit it to the pool by paying the entry fee in Ether. Instead of submitting the actual bracket at this time, you will only submit a commitment that locks in your picks while preventing others from seeing them. After the tournament starts, no further submissions will be accepted.</p>
-          <p>When the tournament ends, the creator of the pool submits the results and the scoring period begins. During the scoring period, everyone who submitted a bracket has the option to reveal their bracket. The highest scoring bracket revealed during the scoring period is the winner. In the event of a tie, all brackets with the winning score split the winnings equally. After the scoring period ends, all winners may claim their winnings.</p>
+        <p>When the tournament ends, the creator of the pool submits the results and the scoring period begins. During the scoring period, everyone who submitted a bracket has the option to reveal their bracket. The highest scoring bracket revealed during the scoring period is the winner. In the event of a tie, all brackets with the winning score split the winnings equally. After the scoring period ends, all winners may claim their winnings.</p>
+        <p><strong>Disclaimer: There is an inherent risk to using decentralized applications, so do not enter funds that you are not willing to lose.</strong></p>
       </div>
     );
   }
