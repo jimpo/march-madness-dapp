@@ -1,4 +1,4 @@
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.19;
 
 import "./ByteBracket.sol";
 import "./FederatedOracleBytes8.sol";
@@ -83,7 +83,9 @@ contract MarchMadness {
         uint32 maxSubmissions_,
         string tournamentDataIPFSHash_,
         address oracleAddress
-    ) {
+    )
+        public
+    {
 		entryFee = entryFee_;
         tournamentStartTime = tournamentStartTime_;
         scoringDuration = scoringDuration_;
@@ -93,42 +95,26 @@ contract MarchMadness {
         resultsOracle = FederatedOracleBytes8(oracleAddress);
 	}
 
-    function submitBracket(bytes32 commitment) payable {
-        if (msg.value != entryFee) {
-            throw;
-        }
-        if (now >= tournamentStartTime) {
-            throw;
-        }
-        if (numSubmissions >= maxSubmissions) {
-            throw;
-        }
+    function submitBracket(bytes32 commitment) public payable {
+        require(msg.value == entryFee);
+        require(now < tournamentStartTime);
+        require(numSubmissions < maxSubmissions);
 
         var submission = submissions[msg.sender];
-        if (submission.commitment != 0) {
-            throw;
-        }
+        require(submission.commitment == 0);
 
         submission.commitment = commitment;
         numSubmissions++;
         SubmissionAccepted(msg.sender);
     }
 
-    function startScoring() returns (bool) {
-        if (results != 0) {
-            return false;
-        }
-        if (now < tournamentStartTime) {
-            return false;
-        }
-        if (now > noContestTime) {
-            return false;
-        }
+    function startScoring() public returns (bool) {
+        require(results == 0);
+        require(now >= tournamentStartTime);
+        require(now < noContestTime);
 
         bytes8 oracleValue = resultsOracle.finalValue();
-        if (oracleValue == 0) {
-            return false;
-        }
+        require(oracleValue != 0);
 
         results = oracleValue;
         scoringMask = ByteBracket.getScoringMask(results);
@@ -137,31 +123,21 @@ contract MarchMadness {
         return true;
     }
 
-    function revealBracket(bytes8 bracket, bytes16 salt) returns (bool) {
+    function revealBracket(bytes8 bracket, bytes16 salt) public returns (bool) {
         var submission = submissions[msg.sender];
-        if (sha3(msg.sender, bracket, salt) != submission.commitment) {
-            return false;
-        }
+        require(keccak256(msg.sender, bracket, salt) == submission.commitment);
 
         submission.bracket = bracket;
         return true;
     }
 
-    function scoreBracket(address account) returns (bool) {
-        if (results == 0) {
-            return false;
-        }
-        if (now >= contestOverTime) {
-            return false;
-        }
+    function scoreBracket(address account) public returns (bool) {
+        require(results != 0);
+        require(now < contestOverTime);
 
         var submission = submissions[account];
-        if (submission.bracket == 0) {
-            return false;
-        }
-        if (submission.score != 0) {
-            return false;
-        }
+        require(submission.bracket != 0);
+        require(submission.score == 0);
 
         submission.score = ByteBracket.getBracketScore(submission.bracket, results, scoringMask);
 
@@ -178,7 +154,7 @@ contract MarchMadness {
         return true;
     }
 
-    function collectWinnings() returns (bool) {
+    function collectWinnings() public returns (bool) {
         if (now < contestOverTime) {
             return false;
         }
@@ -192,59 +168,44 @@ contract MarchMadness {
         }
 
         submission.collectedWinnings = true;
-
-        if (!msg.sender.send(winnings)) {
-            throw;
-        }
+        assert(msg.sender.send(winnings));
 
         return true;
     }
 
-    function collectEntryFee() returns (bool) {
-        if (now < noContestTime) {
-            return false;
-        }
-        if (results != 0) {
-            return false;
-        }
+    function collectEntryFee() public returns (bool) {
+        require(now >= noContestTime);
+        require(results == 0);
 
         var submission = submissions[msg.sender];
-        if (submission.commitment == 0) {
-            return false;
-        }
-        if (submission.collectedEntryFee) {
-            return false;
-        }
+        require(submission.commitment != 0);
+        require(!submission.collectedEntryFee);
 
         submission.collectedEntryFee = true;
-
-        if (!msg.sender.send(entryFee)) {
-            throw;
-        }
+        assert(msg.sender.send(entryFee));
 
         return true;
     }
 
-    function getBracketScore(bytes8 bracket) constant returns (uint8) {
-        if (results == 0) {
-            throw;
-        }
+    function getBracketScore(bytes8 bracket) public view returns (uint8) {
+        require(results != 0);
+
         return ByteBracket.getBracketScore(bracket, results, scoringMask);
     }
 
-    function getBracket(address account) constant returns (bytes8) {
+    function getBracket(address account) public view returns (bytes8) {
         return submissions[account].bracket;
     }
 
-    function getScore(address account) constant returns (uint8) {
+    function getScore(address account) public view returns (uint8) {
         return submissions[account].score;
     }
 
-    function getCommitment(address account) constant returns (bytes32) {
+    function getCommitment(address account) public view returns (bytes32) {
         return submissions[account].commitment;
     }
 
-    function hasCollectedWinnings(address account) constant returns (bool) {
+    function hasCollectedWinnings(address account) public view returns (bool) {
         return submissions[account].collectedWinnings;
     }
 }
