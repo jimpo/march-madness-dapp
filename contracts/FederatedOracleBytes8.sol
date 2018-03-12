@@ -3,8 +3,14 @@ pragma solidity ^0.4.19;
 /// @title Oracle contract where m of n predetermined voters determine a value
 contract FederatedOracleBytes8 {
     struct Voter {
+        // Whether this account is a registered voter.
         bool isVoter;
+
+        // Whether this account's vote has been counted.
         bool hasVoted;
+
+        // IPFS hash of PGP signed proof of voter identity.
+        string identityIPFSHash;
     }
 
     event VoterAdded(address account);
@@ -27,14 +33,14 @@ contract FederatedOracleBytes8 {
         n = n_;
     }
 
-    function addVoter(address account) public {
+    function addVoter(address account, string identityIPFSHash) public {
         require(msg.sender == creator);
         require(voterCount < n);
 
         var voter = voters[account];
         require(!voter.isVoter);
 
-        voter.isVoter = true;
+        voter.identityIPFSHash = identityIPFSHash;
         voterCount++;
         VoterAdded(account);
     }
