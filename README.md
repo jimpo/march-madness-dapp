@@ -14,21 +14,38 @@ The contest has five phases:
 
 ## Deployment
 
+### Tournament Data
+
+The smart contracts commit to the teams playing in the tournament so that all particants are clear on which teams they have picked. The first step is to create a JSON file of the tournament details and make it available over IPFS.
+
+1. Create a JSON configuration file of the tournament details. Examples can be found in the `app/configs/` directory of this repository.
+2. Run the [IPFS daemon](https://ipfs.io/docs/getting-started/) locally.
+3. Run `ipfs add <FILE>`, with the filepath to the JSON file created in step 1.
+4. That command should print to the terminal an IPFS hash. Keep track of this; you will need it when deploying the contracts.
+
 ### The Contracts
 
 The project uses [Truffle](http://truffleframework.com/) for development and deployment of the smart contracts.
 
 1. Install Truffle by running `npm install -g truffle`.
-2. Edit `migrations/2_deploy_contracts.js` specifying the desired contract parameters.
+2. Edit `migrations/2_deploy_contracts.js` specifying the desired contract parameters. The `tournamentDataIPFSHash` is the output from step 4 above.
 3. Run a local Ethereum node exposing RPC with an unlocked account.
 4. Run `truffle migrate --network live`.
 5. Use the truffle console to add the oracles to the deployed FederatedOracleBytes8 contract.
 
+### Choosing Oracles
+
+After deploying the contracts, you will need to register the N preselected oracles.
+
+1. Obtain from each oracle to provide you their Ethereum account address.
+2. Obtain from each oracle a PGP-signed statement of the form "I, [name], am willing to be an Oracle in the Ethereum Bracket Challenge. My account address is [their address] and the address of the oracle contract is [address of FederatedOracleBytes8 contract]." They can generate the signed statement using `gpg --clear-sign`.
+3. Run `ipfs add <FILE>` with the filepath of each PGP-signed statement.
+4. For each oracle, execute the `addVoter` method on the `FederatedOracleBytes8` contract, providing the Ethereum account address and IPFS hash of the signed statement as arguments.
+
 ### The Client
 
-1. Run the [IPFS daemon](https://ipfs.io/docs/getting-started/) locally.
-2. Change to the `app` directory: `cd app`.
-3. Build the static files for the client and upload to IPFS by running `./deploy.sh`.
+1. Change to the `app` directory: `cd app`.
+2. Build the static files for the client and upload to IPFS by running `./deploy.sh`.
 
 ## Issues
 
