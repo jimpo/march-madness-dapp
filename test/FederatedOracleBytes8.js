@@ -24,36 +24,36 @@ contract('FederatedOracleBytes8', (accounts) => {
 
   describe("#addVoter", () => {
     it("throws on calls that are not from the oracle creator", () => {
-      return federatedOracle.addVoter(accounts[1], { from: accounts[1] })
+      return federatedOracle.addVoter(accounts[1], "IPFS_PROOF_HASH", { from: accounts[1] })
         .then(() => assert.fail())
-        .catch((e) => assert.include(e.message, "invalid JUMP"));
+        .catch((e) => assert.include(e.message, "revert"));
     });
 
     it("allows the creator to add up to n voters", () => {
-      return federatedOracle.addVoter(accounts[1])
-        .then(() => federatedOracle.addVoter(accounts[2]))
-        .then(() => federatedOracle.addVoter(accounts[3]));
+      return federatedOracle.addVoter(accounts[1], "IPFS_PROOF_HASH")
+        .then(() => federatedOracle.addVoter(accounts[2], "IPFS_PROOF_HASH"))
+        .then(() => federatedOracle.addVoter(accounts[3], "IPFS_PROOF_HASH"));
     });
 
     it("logs when a voter is added", () => {
-      return federatedOracle.addVoter(accounts[1])
+      return federatedOracle.addVoter(accounts[1], "IPFS_PROOF_HASH")
         .then(({logs}) => assert.equal(logs[0].event, 'VoterAdded'));
     });
 
     it("throws when adding a voter multiple times", () => {
-      return federatedOracle.addVoter(accounts[1])
-        .then(() => federatedOracle.addVoter(accounts[1]))
+      return federatedOracle.addVoter(accounts[1], "IPFS_PROOF_HASH")
+        .then(() => federatedOracle.addVoter(accounts[1], "IPFS_PROOF_HASH"))
         .then(() => assert.fail())
-        .catch((e) => assert.include(e.message, "invalid JUMP"));
+        .catch((e) => assert.include(e.message, "revert"));
     });
 
     it("throws when adding more than n voters", () => {
-      return federatedOracle.addVoter(accounts[1])
-        .then(() => federatedOracle.addVoter(accounts[2]))
-        .then(() => federatedOracle.addVoter(accounts[3]))
-        .then(() => federatedOracle.addVoter(accounts[4]))
+      return federatedOracle.addVoter(accounts[1], "IPFS_PROOF_HASH")
+        .then(() => federatedOracle.addVoter(accounts[2], "IPFS_PROOF_HASH"))
+        .then(() => federatedOracle.addVoter(accounts[3], "IPFS_PROOF_HASH"))
+        .then(() => federatedOracle.addVoter(accounts[4], "IPFS_PROOF_HASH"))
         .then(() => assert.fail())
-        .catch((e) => assert.include(e.message, "invalid JUMP"));
+        .catch((e) => assert.include(e.message, "revert"));
     });
   });
 
@@ -61,22 +61,22 @@ contract('FederatedOracleBytes8', (accounts) => {
     const value = "0x1111111111111111";
 
     beforeEach(() => {
-      return federatedOracle.addVoter(accounts[1])
-        .then(() => federatedOracle.addVoter(accounts[2]))
-        .then(() => federatedOracle.addVoter(accounts[3]));
+      return federatedOracle.addVoter(accounts[1], "IPFS_PROOF_HASH")
+        .then(() => federatedOracle.addVoter(accounts[2], "IPFS_PROOF_HASH"))
+        .then(() => federatedOracle.addVoter(accounts[3], "IPFS_PROOF_HASH"));
     });
 
     it("throws if called by non-approved voter", () => {
       return federatedOracle.submitValue("0x1111111111111111")
         .then(() => assert.fail())
-        .catch((e) => assert.include(e.message, "invalid JUMP"));
+        .catch((e) => assert.include(e.message, "revert"));
     });
 
     it("throws if a voter attempts to vote multiple times", () => {
       return federatedOracle.submitValue("0x1111111111111111", { from: accounts[1] })
         .then(() => federatedOracle.submitValue("0x1111111111111111", { from: accounts[1] }))
         .then(() => assert.fail())
-        .catch((e) => assert.include(e.message, "invalid JUMP"));
+        .catch((e) => assert.include(e.message, "revert"));
     });
 
     it("assigns the finalized value after m voters submit the same value", () => {

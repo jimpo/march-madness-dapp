@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const {assertRevert} = require('./helpers');
 
 const FederatedOracleBytes8 = artifacts.require("./FederatedOracleBytes8.sol");
 const MarchMadness = artifacts.require("./MarchMadness.sol");
@@ -20,7 +21,7 @@ contract('MarchMadness', (accounts) => {
   before(() => {
     return FederatedOracleBytes8.new(1, 1)
       .then((instance) => federatedOracle = instance)
-      .then(() => federatedOracle.addVoter(accounts[0]))
+      .then(() => federatedOracle.addVoter(accounts[0], "IPFS_PROOF_HASH"))
       .then(() => federatedOracle.submitValue(results))
       .then(() => federatedOracle.finalValue())
       .then((value) => assert.equal(value, results));
@@ -56,18 +57,14 @@ contract('MarchMadness', (accounts) => {
   });
 
   describe("#submitBracket", () => {
-    const commitment = crypto.randomBytes(32).toString('hex');
+    const commitment = "0x" + crypto.randomBytes(32).toString('hex');
 
     it("accepts submissions with an entry fee", () => {
       return marchMadness.submitBracket(commitment, { value: entryFee });
     });
 
     it("rejects submissions without the entry fee", () => {
-      return marchMadness.submitBracket(commitment)
-        .then(() => assert.fail("Expected error to be thrown"))
-        .catch((error) => {
-          assert.include(error.message, "VM Exception while processing transaction");
-        });
+      return assertRevert(marchMadness.submitBracket(commitment));
     });
 
     describe("after the tournament has started", () => {
@@ -79,9 +76,7 @@ contract('MarchMadness', (accounts) => {
       it("rejects submission attempts", () => {
         return marchMadness.submitBracket(commitment, { value: entryFee })
           .then(() => assert.fail("Expected error to be thrown"))
-          .catch((error) => {
-            assert.include(error.message, "VM Exception while processing transaction");
-          });
+          .catch((error) => assert.include(error.message, "revert"));
       });
     });
 
@@ -91,16 +86,14 @@ contract('MarchMadness', (accounts) => {
           return marchMadness.submitBracket(commitment, { value: entryFee });
         })
         .then(() => assert.fail("Expected error to be thrown"))
-        .catch((error) => {
-          assert.include(error.message, "VM Exception while processing transaction");
-        });
+        .catch((error) => assert.include(error.message, "revert"));
     });
   });
 
   describe("#startScoring", () => {
     describe("before the tournament has started", () => {
       it("does nothing", () => {
-        return marchMadness.startScoring()
+        return assertRevert(marchMadness.startScoring())
           .then(() => marchMadness.results())
           .then((contractResults) => {
             assert.equal(contractResults, '0x0000000000000000');
@@ -134,8 +127,7 @@ contract('MarchMadness', (accounts) => {
 
       it("can only be called once", () => {
         return marchMadness.startScoring()
-          .then(() => marchMadness.startScoring())
-          .then(({logs}) => assert.lengthOf(logs, 0));
+          .then(() => assertRevert(marchMadness.startScoring()));
       });
     });
   });
@@ -145,8 +137,9 @@ contract('MarchMadness', (accounts) => {
     const salt = "0x" + crypto.randomBytes(16).toString('hex');
 
     beforeEach(() => {
-      const commitment =
-        web3.sha3(accounts[0] + bracket.slice(2) + salt.slice(2), { encoding: 'hex' });
+      const commitment = web3.utils.keccak256(
+        "0x" + accounts[0].slice(2) + bracket.slice(2) + salt.slice(2)
+      );
       return marchMadness.submitBracket(commitment, { value: entryFee })
         .then(() => marchMadness.getCommitment(accounts[0]))
         .then((contractCommitment) => assert.equal(contractCommitment, commitment));
@@ -160,7 +153,7 @@ contract('MarchMadness', (accounts) => {
 
     it("does not accept brackets that don't match the commitment", () => {
       const incorrectSalt = "0x" + crypto.randomBytes(16).toString('hex');
-      return marchMadness.revealBracket(bracket, incorrectSalt)
+      return assertRevert(marchMadness.revealBracket(bracket, incorrectSalt))
         .then(() => marchMadness.getBracket(accounts[0]))
         .then((bracket_) => assert.equal(bracket_, '0x0000000000000000'));
     });
@@ -193,8 +186,9 @@ contract('MarchMadness', (accounts) => {
 
     beforeEach(() => {
       const calls = entries.map(({address, bracket, salt}) => {
-        const commitment =
-          web3.sha3(address + bracket.slice(2) + salt.slice(2), { encoding: 'hex' });
+        const commitment = web3.utils.keccak256(
+          "0x" + address.slice(2) + bracket.slice(2) + salt.slice(2)
+        );
         return marchMadness.submitBracket(commitment, { value: entryFee, from: address })
           .then(() => marchMadness.revealBracket(bracket, salt, { from: address }))
           .then(() => marchMadness.getBracket(address))
@@ -207,7 +201,7 @@ contract('MarchMadness', (accounts) => {
     describe("before results have been submitted", () => {
       it("does not score brackets", () => {
         const {bracket, salt, address} = entries[0];
-        return marchMadness.scoreBracket(address)
+        return assertRevert(marchMadness.scoreBracket(address))
           .then(() => marchMadness.getScore(address))
           .then((score) => assert.equal(score, 0));
       });
@@ -223,7 +217,7 @@ contract('MarchMadness', (accounts) => {
       it("does not score brackets after the scoring period ends", () => {
         const {bracket, salt, address} = entries[0];
         return waitForSeconds(1)
-          .then(() => marchMadness.scoreBracket(address))
+          .then(() => assertRevert(marchMadness.scoreBracket(address)))
           .then(() => marchMadness.getScore(address))
           .then((score) => assert.equal(score, 0));
       });
@@ -289,8 +283,9 @@ contract('MarchMadness', (accounts) => {
 
     beforeEach(() => {
       const calls = entries.map(({address, bracket, salt}) => {
-        const commitment =
-          web3.sha3(address + bracket.slice(2) + salt.slice(2), { encoding: 'hex' });
+        const commitment = web3.utils.keccak256(
+          "0x" + address.slice(2) + bracket.slice(2) + salt.slice(2)
+        );
         return marchMadness.submitBracket(commitment, { value: entryFee, from: address })
           .then(() => marchMadness.revealBracket(bracket, salt, { from: address }))
           .then(() => marchMadness.getBracket(address))
@@ -307,12 +302,15 @@ contract('MarchMadness', (accounts) => {
 
     it("does not allow withdrawals before the scoring period ends", () => {
       const {bracket, salt, address} = entries[0];
-      let initialBalance = web3.eth.getBalance(address).toString();
-      return marchMadness.scoreBracket(address, { gasPrice: 0 })
-        .then(({logs}) => assert.equal(logs[0].event, 'NewWinner'))
-        .then(() => marchMadness.collectWinnings({ from: address, gasPrice: 0 }))
-        .then(() => {
-          assert.equal(web3.eth.getBalance(address).toString(), initialBalance.toString());
+      return web3.eth.getBalance(address)
+        .then((initialBalance) => {
+          return marchMadness.scoreBracket(address, { gasPrice: 0 })
+            .then(({logs}) => assert.equal(logs[0].event, 'NewWinner'))
+            .then(() => assertRevert(
+              marchMadness.collectWinnings({ from: address, gasPrice: 0 })
+            ))
+            .then(() => web3.eth.getBalance(address))
+            .then((finalBalance) => assert.equal(finalBalance, initialBalance));
         });
     });
 
@@ -329,11 +327,16 @@ contract('MarchMadness', (accounts) => {
         .then(() => waitForSeconds(1)) // Wait for scoring period to end
         .then(() => {
           const assertions = entries.map(({bracket, salt, address, expectedWinnings}) => {
-            const initialBalance = web3.eth.getBalance(address);
-            return marchMadness.collectWinnings({ from: address, gasPrice: 0 })
-              .then(() => {
-                const expectedBalance = initialBalance.plus(expectedWinnings);
-                assert.equal(web3.eth.getBalance(address).toString(), expectedBalance.toString());
+            return web3.eth.getBalance(address)
+              .then((initialBalance) => {
+                return marchMadness.collectWinnings({ from: address, gasPrice: 0 })
+                  .then(() => web3.eth.getBalance(address))
+                  .then((finalBalance) => {
+                    const expectedBalance = web3.utils.toBN(initialBalance)
+                          .add(web3.utils.toBN(expectedWinnings))
+                          .toString();
+                    assert.equal(finalBalance, expectedBalance);
+                  });
               });
           });
           return Promise.all(assertions);
@@ -342,7 +345,7 @@ contract('MarchMadness', (accounts) => {
   });
 
   describe("#collectEntryFee", () => {
-    const commitment = crypto.randomBytes(32).toString('hex');
+    const commitment = "0x" + crypto.randomBytes(32).toString('hex');
     const address = accounts[0];
 
     before(() => {
@@ -356,35 +359,38 @@ contract('MarchMadness', (accounts) => {
     });
 
     it("does not allow entrants to collect fees before the no contest time", () => {
-      const initialBalance = web3.eth.getBalance(address);
-      return marchMadness.collectEntryFee({ from: address, gasPrice: 0 })
-        .then(() => {
-          assert.equal(web3.eth.getBalance(address).toString(), initialBalance.toString());
+      return web3.eth.getBalance(address)
+        .then((initialBalance) => {
+          return marchMadness.collectEntryFee({ from: address, gasPrice: 0 })
+            .then(() => web3.eth.getBalance(address))
+            .then((finalBalance) => assert.equal(finalBalance, initialBalance));
         });
     });
 
     it("does not allow entrants to collect fees if the results were submitted", () => {
       return marchMadness.startScoring()
         .then(() => waitForSeconds(1))
-        .then(() => {
-          const initialBalance = web3.eth.getBalance(address);
-          return marchMadness.collectEntryFee({ from: address, gasPrice: 0 })
-            .then(() => {
-              assert.equal(web3.eth.getBalance(address).toString(), initialBalance.toString());
-            });
+        .then(() => web3.eth.getBalance(address))
+        .then((initialBalance) => {
+          return assertRevert(marchMadness.collectEntryFee({ from: address, gasPrice: 0 }))
+            .then(() => web3.eth.getBalance(address))
+            .then((finalBalance) => assert.equal(finalBalance, initialBalance));
         });
     });
 
     it("allows entrants to reclaim their entry fees once after the no contest time", () => {
-      const initialBalance = web3.eth.getBalance(address);
-      return waitForSeconds(1)
-        .then(() => marchMadness.collectEntryFee({ from: address, gasPrice: 0 }))
-        .then(() => marchMadness.collectEntryFee({ from: address, gasPrice: 0 }))
-        .then(() => {
-          assert.equal(
-            web3.eth.getBalance(address).toString(),
-            initialBalance.plus(entryFee).toString()
-          );
+      return web3.eth.getBalance(address)
+        .then((initialBalance) => {
+          return waitForSeconds(1)
+            .then(() => marchMadness.collectEntryFee({ from: address, gasPrice: 0 }))
+            .then(() => assertRevert(marchMadness.collectEntryFee({ from: address, gasPrice: 0 })))
+            .then(() => web3.eth.getBalance(address))
+            .then((finalBalance) => {
+              const expectedBalance = web3.utils.toBN(initialBalance)
+                    .add(web3.utils.toBN(entryFee))
+                    .toString();
+              assert.equal(finalBalance, expectedBalance);
+            });
         });
     });
   });

@@ -1,4 +1,4 @@
-pragma solidity ^0.4.19;
+pragma solidity ^0.5.0;
 
 // This library can be used to score byte brackets. Byte brackets are a succinct encoding of a
 // 64 team bracket into an 8-byte array. The tournament results are encoded in the same format and
@@ -36,7 +36,7 @@ library ByteBracket {
         returns (uint64 mask)
     {
         // Filter for the second most significant bit since MSB is ignored.
-        bytes8 bitSelector = 1 << 62;
+        bytes8 bitSelector = 0x4000000000000000;
         for (uint i = 0; i < 31; i++) {
             mask <<= 2;
             if (results & bitSelector != 0) {

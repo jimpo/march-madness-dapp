@@ -1,4 +1,4 @@
-pragma solidity ^0.4.19;
+pragma solidity ^0.5.0;
 
 import "./ByteBracket.sol";
 import "./FederatedOracleBytes8.sol";
@@ -75,13 +75,13 @@ contract MarchMadness {
     // IPFS hash of JSON file containing tournament information (eg. teams, regions, etc)
     string public tournamentDataIPFSHash;
 
-	function MarchMadness(
+	constructor(
         uint entryFee_,
         uint tournamentStartTime_,
         uint noContestTime_,
         uint scoringDuration_,
         uint32 maxSubmissions_,
-        string tournamentDataIPFSHash_,
+        string memory tournamentDataIPFSHash_,
         address oracleAddress
     )
         public
@@ -100,15 +100,15 @@ contract MarchMadness {
         require(now < tournamentStartTime);
         require(numSubmissions < maxSubmissions);
 
-        var submission = submissions[msg.sender];
+        Submission storage submission = submissions[msg.sender];
         require(submission.commitment == 0);
 
         submission.commitment = commitment;
         numSubmissions++;
-        SubmissionAccepted(msg.sender);
+        emit SubmissionAccepted(msg.sender);
     }
 
-    function startScoring() public returns (bool) {
+    function startScoring() public {
         require(results == 0);
         require(now >= tournamentStartTime);
         require(now < noContestTime);
@@ -119,23 +119,22 @@ contract MarchMadness {
         results = oracleValue;
         scoringMask = ByteBracket.getScoringMask(results);
         contestOverTime = now + scoringDuration;
-        TournamentOver();
-        return true;
+        emit TournamentOver();
     }
 
-    function revealBracket(bytes8 bracket, bytes16 salt) public returns (bool) {
-        var submission = submissions[msg.sender];
-        require(keccak256(msg.sender, bracket, salt) == submission.commitment);
+    function revealBracket(bytes8 bracket, bytes16 salt) public {
+        Submission storage submission = submissions[msg.sender];
+        bytes32 commitment = keccak256(abi.encodePacked(msg.sender, bracket, salt));
+        require(commitment == submission.commitment);
 
         submission.bracket = bracket;
-        return true;
     }
 
-    function scoreBracket(address account) public returns (bool) {
+    function scoreBracket(address account) public {
         require(results != 0);
         require(now < contestOverTime);
 
-        var submission = submissions[account];
+        Submission storage submission = submissions[account];
         require(submission.bracket != 0);
         require(submission.score == 0);
 
@@ -147,44 +146,32 @@ contract MarchMadness {
         }
         if (submission.score == winningScore) {
             numWinners++;
-            winnings = this.balance / numWinners;
-            NewWinner(account, submission.score);
+            winnings = address(this).balance / numWinners;
+            emit NewWinner(account, submission.score);
         }
-
-        return true;
     }
 
-    function collectWinnings() public returns (bool) {
-        if (now < contestOverTime) {
-            return false;
-        }
+    function collectWinnings() public {
+        require(now >= contestOverTime);
 
-        var submission = submissions[msg.sender];
-        if (submission.score != winningScore) {
-            return false;
-        }
-        if (submission.collectedWinnings) {
-            return false;
-        }
+        Submission storage submission = submissions[msg.sender];
+        require(submission.score == winningScore);
+        require(!submission.collectedWinnings);
 
         submission.collectedWinnings = true;
         assert(msg.sender.send(winnings));
-
-        return true;
     }
 
-    function collectEntryFee() public returns (bool) {
+    function collectEntryFee() public {
         require(now >= noContestTime);
         require(results == 0);
 
-        var submission = submissions[msg.sender];
+        Submission storage submission = submissions[msg.sender];
         require(submission.commitment != 0);
         require(!submission.collectedEntryFee);
 
         submission.collectedEntryFee = true;
         assert(msg.sender.send(entryFee));
-
-        return true;
     }
 
     function getBracketScore(bytes8 bracket) public view returns (uint8) {

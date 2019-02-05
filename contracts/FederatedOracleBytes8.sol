@@ -1,4 +1,4 @@
-pragma solidity ^0.4.19;
+pragma solidity ^0.5.0;
 
 /// @title Oracle contract where m of n predetermined voters determine a value
 contract FederatedOracleBytes8 {
@@ -27,37 +27,37 @@ contract FederatedOracleBytes8 {
     uint8 private voterCount;
     address private creator;
 
-    function FederatedOracleBytes8(uint8 m_, uint8 n_) public {
+    constructor(uint8 m_, uint8 n_) public {
         creator = msg.sender;
         m = m_;
         n = n_;
     }
 
-    function addVoter(address account, string identityIPFSHash) public {
+    function addVoter(address account, string calldata identityIPFSHash) external {
         require(msg.sender == creator);
         require(voterCount < n);
 
-        var voter = voters[account];
+        Voter storage voter = voters[account];
         require(!voter.isVoter);
 
         voter.isVoter = true;
         voter.identityIPFSHash = identityIPFSHash;
         voterCount++;
-        VoterAdded(account);
+        emit VoterAdded(account);
     }
 
     function submitValue(bytes8 value) public {
-        var voter = voters[msg.sender];
+        Voter storage voter = voters[msg.sender];
         require(voter.isVoter);
         require(!voter.hasVoted);
 
         voter.hasVoted = true;
         votes[value]++;
-        VoteSubmitted(msg.sender, value);
+        emit VoteSubmitted(msg.sender, value);
 
         if (votes[value] == m) {
             finalValue = value;
-            ValueFinalized(value);
+            emit ValueFinalized(value);
         }
     }
 }
