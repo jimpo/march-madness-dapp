@@ -12,6 +12,59 @@ The contest has five phases:
 - **Scoring**. During the scoring period, entrants may reveal their bracket picks and score their brackets. The highest scoring bracket revealed is recorded. After the scoring period ends, all entrants with a highest scoring bracket split the pot and may withdraw their winnings. There are no tiebreakers.
 - **Contest over**. When the scoring period ends after a fixed amount of time, all entrants with a highest scoring bracket split the pot and may withdraw their winnings.
 
+## Development
+
+This is the recommended setup for local development. If you prefer to use other tools, be my guest.
+
+1. Install [NodeJS](https://nodejs.org/en/).
+2. Install [Parity Ethereum](https://www.parity.io/ethereum/), an Ethereum node.
+3. Run a development chain using Parity Ethereum. This is a local testnet. Be sure to unlock the preconfigured account that owns the initial supply of coins on this chain. Also, the node has to allow CORS requests from MetaMask.
+  ```bash
+$ echo "\n" > /tmp/blank_password
+$ parity --chain dev \
+    --unlock 0x00a329c0648769a73afac7f9381e08fb43dbea72 \
+    --password /tmp/blank_password \
+    --jsonrpc-cors "chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn"
+  ```
+4. Install [Google Chrome](https://www.google.com/chrome/) and [MetaMask](https://metamask.io/), a Chrome extension that serves as an Ethereum wallet and adapter to the Ethereum network. Set up a MetaMask account if you don't have one. The account does not need to be secure if you only use it for this testnet, but keep in mind that MetaMask may use the same account if you switch to mainnet at a later time.
+5. Connect MetaMask to your local network running on localhost:8545.
+6. Install [IPFS](https://docs.ipfs.io/introduction/install/).
+7. Initialize your IPFS node and start the daemon. See [Basic Usage](https://docs.ipfs.io/introduction/usage/) instructions for more information on IPFS setup.
+  ```bash
+$ ipfs init
+$ ipfs daemon
+  ```
+8. Change to this directory.
+9. Add the tournament config data to IPFS. The tournament config is a JSON file specifying which teams are playing in a tournament, their region/seed, and other metadata. There are some sample config files from recent years in `app/configs`.
+  ```bash
+$ ipfs add app/configs/mens-2018.json
+added QmTb8m7igYRawLAjMQCUXn67KNQu21sjarTfqHV7aCV3eY mens-2018.json
+  ```
+10. Configure your tournament in the migration file, `migrations/2_deploy_contracts.js`. Ensure that the `tournamentDataIPFSHash` argument in the `MarchMadness` constructor matches the output hash from step 6.
+11. Install [Truffle](https://truffleframework.com/docs/truffle/overview), a command line development framework for Ethereum applications.
+  ```bash
+$ npm install -g truffle
+  ```
+12. Build and deploy the contracts using Truffle.
+  ```bash
+$ truffle migrate
+  ```
+13. Now send some testnet coins to your MetaMask account. First, copy the account address from the extension (eg. 0x87523cfC4Fabc45443a5173a1048a9879a642529). Now, open the truffle console and repeat the following commands, replacing the `to` address with your own. Afterward, verify that your MetaMask balance has increased.
+  ```bash
+$ truffle console
+truffle(development)> web3.eth.getAccounts().then((accounts) => web3.eth.defaultAccount = accounts[0])
+truffle(development)> web3.eth.sendTransaction({ to: "0x87523cfC4Fabc45443a5173a1048a9879a642529", value: web3.utils.toWei('1000', 'ether') })
+  ```
+13. Change to the `app` directory and install dependencies.
+  ```bash
+$ cd app
+$ npm install
+  ```
+14. Start the development web server and visit [http://localhost:8000](http://localhost:8000/) in Chrome.
+  ```bash
+$ npm start
+  ```
+
 ## Deployment
 
 ### Tournament Data

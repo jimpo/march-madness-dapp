@@ -14,8 +14,8 @@ module.exports = function(deployer) {
       return deployer.deploy(
         MarchMadness,
         "250000000000000000", // entryFee
-        timestampUTC(2017, 3, 21, 17, 0, 0), // tournamentStartTime
-        timestampUTC(2017, 4, 15, 0, 0, 0), // noContestTime
+        timestampUTC(2019, 3, 21, 17, 0, 0), // tournamentStartTime
+        timestampUTC(2019, 4, 15, 0, 0, 0), // noContestTime
         3 * 24 * 60 * 60, // scoringDuration
         1000, // maxSubmissions
         "QmTb8m7igYRawLAjMQCUXn67KNQu21sjarTfqHV7aCV3eY", // tournamentDataIPFSHash
